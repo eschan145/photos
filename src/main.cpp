@@ -113,7 +113,7 @@ private:
     void create_widgets(const QString& title, const QList<QString>& values, int max_rows = 1) {
         QWidget* layoutw = new QWidget;
         layoutw->setFixedWidth(300);
-        
+
         QVBoxLayout* layout = new QVBoxLayout(layoutw);
 
         QString text;
@@ -124,34 +124,60 @@ private:
             }
         }
 
+        /*
+        - text_layout (VBox)
+            - row_layout (HBox)
+        */
+
         QWidget* text_layoutw = new QWidget;
-        QGridLayout* text_layout = new QGridLayout;
+        QVBoxLayout* text_layout = new QVBoxLayout;
         text_layoutw->setLayout(text_layout);
+
+        int total = values.size();
         int columns = 4;
-        for (int i = 0; i < values.size(); ++i) {
-            QLineEdit* edit = new QLineEdit;
-            edit->setText(values[i]);
-            edit->setStyleSheet(
-                "QLineEdit {"
-                "  background: transparent;"
-                "  border: none;"
-                "}"
-            );
-            
-            auto resize = [edit]() {
-                QFontMetrics metrics(edit->font());
-                int width = metrics.horizontalAdvance(edit->text()) + 10;
-                edit->setFixedWidth(width);
-            };
-            resize();
-            connect(edit, &QLineEdit::textChanged, resize);
-            int row = i / columns;
-            int col = i % columns;
-            text_layout->addWidget(edit, row, col);
+        int rows = (total + columns - 1) / columns;
+
+        int counter = 0;
+        for (int row = 0; row < rows; ++row) {
+            QWidget* row_layoutw = new QWidget;
+            QHBoxLayout* row_layout = new QHBoxLayout;
+            row_layoutw->setLayout(row_layout);
+
+            row_layout->setContentsMargins(0, 0, 5, 0);
+
+            text_layout->addWidget(row_layoutw, 0, Qt::AlignTop);
+
+            for (int col = 0; col < columns; ++ col) {
+                int index = row * columns + col;
+                if (index >= total) break;
+
+                QLineEdit* edit = new QLineEdit;
+                edit->setText(values[counter]);
+                edit->setStyleSheet(
+                    "QLineEdit {"
+                    "  background: transparent;"
+                    "  border: none;"
+                    "}"
+                );
+
+                auto resize = [edit]() {
+                    QFontMetrics metrics(edit->font());
+                    int width = metrics.horizontalAdvance(edit->text()) + 10;
+                    edit->setFixedWidth(width);
+                };
+                resize();
+                connect(edit, &QLineEdit::textChanged, resize);
+
+                row_layout->addWidget(edit, 0, Qt::AlignLeft);
+
+                counter++;
+            }
+
+            row_layout->addStretch();
         }
-        
-     
-        
+        text_layout->addStretch();
+
+
         // QFontMetrics font_metrics(text_edit->font());
         // int line_height = font_metrics.lineSpacing();
         // int max_height = line_height * max_rows + 6;
@@ -232,11 +258,11 @@ private:
                 auto rational = [&](const std::string& tag) -> float {
                     return parse_rational(exifdata[tag]);
                 };
-                
+
                 double x_resolution = rational("Exif.Image.XResolution");
                 double y_resolution = rational("Exif.Image.YResolution");
                 int resolution_unit = std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
-                
+
                 float multiplier;
                 if (resolution_unit == 2) {
                     multiplier = 1;
@@ -245,12 +271,12 @@ private:
                 } else {
                     throw std::invalid_argument("Unknown resolution unit!");
                 }
-                
+
                 x_resolution *= multiplier;
                 y_resolution *= multiplier;
-                
+
                 float dpi = std::sqrt(x_resolution * y_resolution);
-                
+
                 this->create_widgets("Dimensions",
                     {
                         qs(exifdata.at("Exif.Image.ImageWidth")) + " x " +
