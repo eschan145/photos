@@ -24,13 +24,10 @@ struct FieldData {
     QString readable_name;
 };
 
-struct MetadataRow {
-    QLabel* label;
-    QWidget* widget;
+struct MetadataField {
+    QString name;
+    QString value;
 };
-
-QMap<QString, MetadataRow> metadata_rows;
-
 
 std::map<QString, FieldData> supported_fields = {
     {"Exif.Image.DateTime", {"Date/Time"}},
@@ -110,19 +107,11 @@ private:
     QVBoxLayout* metadata_layout;
     QWidget* central_widget;
 
-    void create_widgets(const QString& title, const QList<QString>& values, int max_rows = 1) {
+    void create_widgets(const QString& title, const QList<MetadataField>& values, int max_rows = 1) {
         QWidget* layoutw = new QWidget;
         layoutw->setFixedWidth(300);
 
         QVBoxLayout* layout = new QVBoxLayout(layoutw);
-
-        QString text;
-        for (int i = 0; i < values.size(); ++i) {
-            text += values[i];
-            if (i != values.size() - 1) {
-                text += "\t";
-            }
-        }
 
         /*
         - text_layout (VBox)
@@ -133,8 +122,10 @@ private:
         QVBoxLayout* text_layout = new QVBoxLayout;
         text_layoutw->setLayout(text_layout);
 
+        text_layout->setContentsMargins(0, 0, 0, 0);
+
         int total = values.size();
-        int columns = 4;
+        int columns = 5;
         int rows = (total + columns - 1) / columns;
 
         int counter = 0;
@@ -152,7 +143,8 @@ private:
                 if (index >= total) break;
 
                 QLineEdit* edit = new QLineEdit;
-                edit->setText(values[counter]);
+                edit->setText(values[counter].value);
+                edit->setToolTip(values[counter].name);
                 edit->setStyleSheet(
                     "QLineEdit {"
                     "  background: transparent;"
@@ -279,9 +271,93 @@ private:
 
                 this->create_widgets("Dimensions",
                     {
-                        qs(exifdata.at("Exif.Image.ImageWidth")) + " x " +
-                        qs(exifdata.at("Exif.Image.ImageLength")),
-                        QString::number(dpi)
+                        {
+                            "Dimensions",
+                            qs(exifdata.at("Exif.Image.ImageWidth")) + " x " +
+                            qs(exifdata.at("Exif.Image.ImageLength"))
+                        },
+                        { "DPI", QString::number(dpi) }
+                    }
+                );
+            }
+            if (key == "Exif.Photo.ExposureTime") {
+                QString focal_length;
+                {
+                    std::string raw = exifdata.at("Exif.Photo.FocalLength");
+                    float result = 0.f;
+                    if (raw.find('/') != std::string::npos) {
+                        size_t slash = raw.find('/');
+                        double num = std::stod(raw.substr(0, slash));
+                        double denom = std::stod(raw.substr(slash + 1));
+                        result = num / denom;
+                    } else {
+                        result = std::stod(raw);
+                    }
+                    focal_length = QString::number(result, 'f', 1) + " mm";
+                }
+                QString aperture;
+                {
+                    std::string raw = exifdata.at("Exif.Photo.FNumber");
+                    float value = 0.f;
+                    if (raw.find('/') != std::string::npos) {
+                        size_t slash = raw.find('/');
+                        double num = std::stod(raw.substr(0, slash));
+                        double denom = std::stod(raw.substr(slash + 1));
+                        value = num / denom;
+                    } else {
+                        value = std::stod(raw);
+                    }
+                    aperture = "f/" + QString::number(value, 'f', 1);
+                }
+                QString exposure_program;
+                {
+                    switch (std::stoi(exifdata.at("Exif.Photo.ExposureProgram"))) {
+                        case 1:
+                            exposure_program = "Manual";
+                            break;
+                        case 2:
+                            exposure_program = "Normal";
+                            break;
+                        case 3:
+                            exposure_program = "Aperture";
+                            break;
+                        case 4:
+                            exposure_program = "Shutter";
+                            break;
+                        case 5:
+                            exposure_program = "Creative";
+                            break;
+                        case 6:
+                            exposure_program = "Action";
+                            break;
+                        case 7:
+                            exposure_program = "Portrait";
+                            break;
+                        case 8:
+                            exposure_program = "Landscape";
+                            break;
+                        default:
+                            exposure_program = "Unknown";
+                    }
+                }
+
+                QString exposure_time = qs(exifdata.at("Exif.Photo.ExposureTime")) + " sec";
+                QString iso = "ISO " + qs(exifdata.at("Exif.Photo.ISOSpeedRatings"));
+                QString flash = (std::stoi(exifdata.at("Exif.Photo.Flash")) & 0x1) ? "Flash" : "No flash";
+                QString wb = (std::stoi(exifdata.at("Exif.Photo.WhiteBalance")) == 0) ? "Auto" : "Manual";
+
+                this->create_widgets("Camera",
+                    {
+                        { "Make", qs(exifdata.at("Exif.Image.Make")) },
+                        { "Model", qs(exifdata.at("Exif.Image.Model")) },
+                        { "Focal length", focal_length },
+                        { "F-stop", aperture },
+                        { "Exposure time", exposure_time },
+                        { "ISO speed", iso },
+                        { "Flash", flash },
+                        { "Exposure program", exposure_program },
+                        { "White Balance", wb },
+                        { "Zoom ratio", qs(exifdata.at("Exif.Photo.DigitalZoomRatio")) }
                     }
                 );
             }
@@ -317,9 +393,9 @@ private:
                 this->create_widgets(
                     "GPS",
                     {
-                        QString::number(latitude),
-                        QString::number(longitude),
-                        QString::number(altitude)
+                        { "Latitude", QString::number(latitude) },
+                        { "Longitude", QString::number(longitude) },
+                        { "Altitude", QString::number(altitude) }
                     }
                 );
             }
