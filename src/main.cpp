@@ -131,6 +131,12 @@ private:
         for (int i = 0; i < values.size(); ++i) {
             QLineEdit* edit = new QLineEdit;
             edit->setText(values[i]);
+            edit->setStyleSheet(
+                "QLineEdit {"
+                "  background: transparent;"
+                "  border: none;"
+                "}"
+            );
             
             auto resize = [edit]() {
                 QFontMetrics metrics(edit->font());
@@ -144,8 +150,7 @@ private:
             text_layout->addWidget(edit, row, col);
         }
         
-
-        
+     
         
         // QFontMetrics font_metrics(text_edit->font());
         // int line_height = font_metrics.lineSpacing();
