@@ -132,11 +132,13 @@ private:
             QLineEdit* edit = new QLineEdit;
             edit->setText(values[i]);
             
-            connect(edit, &QLineEdit::textChanged, [edit]() {
+            auto resize = [edit]() {
                 QFontMetrics metrics(edit->font());
                 int width = metrics.horizontalAdvance(edit->text()) + 10;
                 edit->setFixedWidth(width);
-            });
+            };
+            resize();
+            connect(edit, &QLineEdit::textChanged, resize);
             int row = i / columns;
             int col = i % columns;
             text_layout->addWidget(edit, row, col);
