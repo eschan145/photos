@@ -1,32 +1,35 @@
+#include <Exiv2/exiv2.hpp>
+#include <QApplication>
+#include <QDateTime>
+#include <QDateTimeEdit>
+#include <QFileDialog>
+#include <QFont>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QMainWindow>
+#include <QMap>
+#include <QPair>
+#include <QPalette>
+#include <QPushButton>
+#include <QScrollArea>
+#include <QString>
+#include <QTextEdit>
+#include <QWidget>
 #include <iostream>
 #include <map>
-
-#include <QApplication>
-#include <QMainWindow>
-#include <QWidget>
-#include <QLabel>
-#include <QLineEdit>
-#include <QFont>
-#include <QPushButton>
-#include <QMap>
-#include <QString>
-#include <QFileDialog>
-#include <QLayout>
-#include <QPair>
-#include <QList>
-#include <QTextEdit>
-#include <QPalette>
-#include <QScrollArea>
-
-#include <Exiv2/exiv2.hpp>
 
 struct FieldData {
     QString readable_name;
 };
 
+enum class DataType { STRING, DATE };
+
 struct MetadataField {
     QString name;
     QString value;
+    DataType type = DataType::STRING;
 };
 
 std::map<QString, FieldData> supported_fields = {
@@ -63,14 +66,12 @@ float parse_rational(const std::string& string) {
     return 0.f;
 }
 
-
 inline QString qs(const std::string& string) {
     return QString::fromStdString(string);
 }
 
 class MainWindow : public QMainWindow {
-
-public:
+   public:
     MainWindow() {
         this->setFixedSize(500, 400);
         central_widget = new QWidget(this);
@@ -95,19 +96,21 @@ public:
 
         this->main_layout->addWidget(scroll_area);
 
-        connect(open_button, &QPushButton::clicked, this, &MainWindow::simulateMetadataUpdate);
+        connect(open_button, &QPushButton::clicked, this,
+                &MainWindow::simulateMetadataUpdate);
 
         QList<QPair<QString, QString>> metadata = {};
-
     }
 
-private:
+   private:
     QHBoxLayout* main_layout;
     QVBoxLayout* image_layout;
     QVBoxLayout* metadata_layout;
     QWidget* central_widget;
 
-    void create_widgets(const QString& title, const QList<MetadataField>& values, int max_rows = 1) {
+    void create_widgets(const QString& title,
+                        const QList<MetadataField>& values,
+                        DataType type = DataType::STRING, int max_rows = 1) {
         QWidget* layoutw = new QWidget;
         layoutw->setFixedWidth(300);
 
@@ -118,86 +121,88 @@ private:
             - row_layout (HBox)
         */
 
-        QWidget* text_layoutw = new QWidget;
-        QVBoxLayout* text_layout = new QVBoxLayout;
-        text_layoutw->setLayout(text_layout);
+        QWidget* data_layoutw = new QWidget;
 
-        text_layout->setContentsMargins(0, 0, 0, 0);
+        if (type == DataType::STRING) {
+            QVBoxLayout* data_layout = new QVBoxLayout;
+            data_layoutw->setLayout(data_layout);
 
-        int total = values.size();
-        int columns = 5;
-        int rows = (total + columns - 1) / columns;
+            data_layout->setContentsMargins(0, 0, 0, 0);
 
-        int counter = 0;
-        for (int row = 0; row < rows; ++row) {
-            QWidget* row_layoutw = new QWidget;
-            QHBoxLayout* row_layout = new QHBoxLayout;
-            row_layoutw->setLayout(row_layout);
+            int total = values.size();
+            int columns = 5;
+            int rows = (total + columns - 1) / columns;
 
-            row_layout->setContentsMargins(0, 0, 5, 0);
+            int counter = 0;
+            for (int row = 0; row < rows; ++row) {
+                QWidget* row_layoutw = new QWidget;
+                QHBoxLayout* row_layout = new QHBoxLayout;
+                row_layoutw->setLayout(row_layout);
 
-            text_layout->addWidget(row_layoutw, 0, Qt::AlignTop);
+                row_layout->setContentsMargins(0, 0, 5, 0);
 
-            for (int col = 0; col < columns; ++ col) {
-                int index = row * columns + col;
-                if (index >= total) break;
+                data_layout->addWidget(row_layoutw, 0, Qt::AlignTop);
 
-                QLineEdit* edit = new QLineEdit;
-                edit->setText(values[counter].value);
-                edit->setToolTip(values[counter].name);
-                edit->setStyleSheet(
-                    "QLineEdit {"
-                    "  background: transparent;"
-                    "  border: none;"
-                    "}"
-                );
+                for (int col = 0; col < columns; ++col) {
+                    int index = row * columns + col;
+                    if (index >= total) break;
 
-                auto resize = [edit]() {
-                    QFontMetrics metrics(edit->font());
-                    int width = metrics.horizontalAdvance(edit->text()) + 10;
-                    edit->setFixedWidth(width);
-                };
-                resize();
-                connect(edit, &QLineEdit::textChanged, resize);
+                    QLineEdit* edit = new QLineEdit;
+                    edit->setText(values[counter].value);
+                    edit->setToolTip(values[counter].name);
+                    edit->setStyleSheet(
+                        "QLineEdit {"
+                        "  background: transparent;"
+                        "  border: none;"
+                        "}");
 
-                row_layout->addWidget(edit, 0, Qt::AlignLeft);
+                    auto resize = [edit]() {
+                        QFontMetrics metrics(edit->font());
+                        int width =
+                            metrics.horizontalAdvance(edit->text()) + 10;
+                        edit->setFixedWidth(width);
+                    };
+                    resize();
+                    connect(edit, &QLineEdit::textChanged, resize);
 
-                counter++;
+                    row_layout->addWidget(edit, 0, Qt::AlignLeft);
+
+                    counter++;
+                }
+
+                row_layout->addStretch();
             }
+            data_layout->addStretch();
 
-            row_layout->addStretch();
+        } else if (type == DataType::DATE) {
+            QHBoxLayout* data_layout = new QHBoxLayout;
+            data_layoutw->setLayout(data_layout);
+
+            QDateTimeEdit* dt_edit = new QDateTimeEdit;
+            dt_edit->setDisplayFormat("MMMM d, h:mm:ss AP");
+            dt_edit->setCalendarPopup(true);
+            dt_edit->setDateTime(
+                QDateTime::fromString(values[0].value, "yyyy:MM:dd HH:mm:ss"));
+
+            data_layout->addWidget(dt_edit);
         }
-        text_layout->addStretch();
-
-
-        // QFontMetrics font_metrics(text_edit->font());
-        // int line_height = font_metrics.lineSpacing();
-        // int max_height = line_height * max_rows + 6;
-        // text_edit->setMaximumHeight(max_height);
-        // QPalette palette = text_edit->palette();
-        // palette.setColor(QPalette::Base, Qt::transparent);
-        // text_edit->setPalette(palette);
-        // text_edit->setAttribute(Qt::WA_TranslucentBackground);
-        // text_edit->setFrameStyle(QFrame::NoFrame);
-
         QLabel* label = new QLabel(title);
         label->setFont(QFont("Segoe UI", 11));
         label->setFrameStyle(QFrame::Box | QFrame::Plain);
 
-        label->setLineWidth(1);
+        label->setLineWidth(0);
 
         layout->addWidget(label);
-        layout->addWidget(text_layoutw);
+        layout->addWidget(data_layoutw);
+
         this->metadata_layout->addWidget(layoutw, 0, Qt::AlignTop);
     }
-
 
     float parse_fraction(const QString& fraction) {
         QStringList parts = fraction.split('/');
         if (parts.size() != 2) {
             throw std::invalid_argument(
-                "Invalid fraction format: " + fraction.toStdString() + "!"
-            );
+                "Invalid fraction format: " + fraction.toStdString() + "!");
         }
 
         bool ok1, ok2;
@@ -206,13 +211,11 @@ private:
 
         if (!ok1 || !ok2) {
             throw std::invalid_argument(
-                "Non-numeric fraction part: " + fraction.toStdString() + "!"
-            );
+                "Non-numeric fraction part: " + fraction.toStdString() + "!");
         }
         if (denominator == 0)
-            throw std::invalid_argument(
-                "Division by zero in fraction: " + fraction.toStdString()
-            );
+            throw std::invalid_argument("Division by zero in fraction: " +
+                                        fraction.toStdString());
 
         return numerator / denominator;
     }
@@ -234,7 +237,8 @@ private:
         return decimal;
     }
 
-    QList<QPair<QString, QString>> process_metadata(Exiv2::ExifData& exif_data) {
+    QList<QPair<QString, QString>> process_metadata(
+        Exiv2::ExifData& exif_data) {
         QList<QPair<QString, QString>> metadata;
         std::map<std::string, std::string> exifdata;
 
@@ -244,8 +248,16 @@ private:
         }
 
         for (const auto& pair : exif_data) {
-           std::string key = pair.key();
+            std::string key = pair.key();
             QString value = qs(pair.toString());
+            if (key == "Exif.Photo.DateTimeOriginal") {
+                std::cout << exifdata["Exif.Photo.DateTimeOriginal"] << "\n";
+                this->create_widgets(
+                    "Date",
+                    {{"Date", qs(exifdata["Exif.Photo.DateTimeOriginal"]),
+                      DataType::DATE}},
+                    DataType::DATE);
+            }
             if (key == "Exif.Image.ImageWidth") {
                 auto rational = [&](const std::string& tag) -> float {
                     return parse_rational(exifdata[tag]);
@@ -253,7 +265,8 @@ private:
 
                 double x_resolution = rational("Exif.Image.XResolution");
                 double y_resolution = rational("Exif.Image.YResolution");
-                int resolution_unit = std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
+                int resolution_unit =
+                    std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
 
                 float multiplier;
                 if (resolution_unit == 2) {
@@ -269,21 +282,17 @@ private:
 
                 float dpi = std::sqrt(x_resolution * y_resolution);
 
-                this->create_widgets("Dimensions",
-                    {
-                        {
-                            "Dimensions",
-                            qs(exifdata.at("Exif.Image.ImageWidth")) + " x " +
-                            qs(exifdata.at("Exif.Image.ImageLength"))
-                        },
-                        { "DPI", QString::number(dpi) }
-                    }
-                );
+                this->create_widgets(
+                    "Dimensions",
+                    {{"Dimensions", qs(exifdata["Exif.Image.ImageWidth"]) +
+                                        " x " +
+                                        qs(exifdata["Exif.Image.ImageLength"])},
+                     {"DPI", QString::number(dpi)}});
             }
             if (key == "Exif.Photo.ExposureTime") {
                 QString focal_length;
                 {
-                    std::string raw = exifdata.at("Exif.Photo.FocalLength");
+                    std::string raw = exifdata["Exif.Photo.FocalLength"];
                     float result = 0.f;
                     if (raw.find('/') != std::string::npos) {
                         size_t slash = raw.find('/');
@@ -297,7 +306,7 @@ private:
                 }
                 QString aperture;
                 {
-                    std::string raw = exifdata.at("Exif.Photo.FNumber");
+                    std::string raw = exifdata["Exif.Photo.FNumber"];
                     float value = 0.f;
                     if (raw.find('/') != std::string::npos) {
                         size_t slash = raw.find('/');
@@ -311,7 +320,7 @@ private:
                 }
                 QString exposure_program;
                 {
-                    switch (std::stoi(exifdata.at("Exif.Photo.ExposureProgram"))) {
+                    switch (std::stoi(exifdata["Exif.Photo.ExposureProgram"])) {
                         case 1:
                             exposure_program = "Manual";
                             break;
@@ -341,63 +350,58 @@ private:
                     }
                 }
 
-                QString exposure_time = qs(exifdata.at("Exif.Photo.ExposureTime")) + " sec";
-                QString iso = "ISO " + qs(exifdata.at("Exif.Photo.ISOSpeedRatings"));
-                QString flash = (std::stoi(exifdata.at("Exif.Photo.Flash")) & 0x1) ? "Flash" : "No flash";
-                QString wb = (std::stoi(exifdata.at("Exif.Photo.WhiteBalance")) == 0) ? "Auto" : "Manual";
+                QString exposure_time =
+                    qs(exifdata["Exif.Photo.ExposureTime"]) + " sec";
+                QString iso =
+                    "ISO " + qs(exifdata["Exif.Photo.ISOSpeedRatings"]);
+                QString flash = (std::stoi(exifdata["Exif.Photo.Flash"]) & 0x1)
+                                    ? "Flash"
+                                    : "No flash";
+                QString wb =
+                    (std::stoi(exifdata["Exif.Photo.WhiteBalance"]) == 0)
+                        ? "Auto"
+                        : "Manual";
 
-                this->create_widgets("Camera",
-                    {
-                        { "Make", qs(exifdata.at("Exif.Image.Make")) },
-                        { "Model", qs(exifdata.at("Exif.Image.Model")) },
-                        { "Focal length", focal_length },
-                        { "F-stop", aperture },
-                        { "Exposure time", exposure_time },
-                        { "ISO speed", iso },
-                        { "Flash", flash },
-                        { "Exposure program", exposure_program },
-                        { "White Balance", wb },
-                        { "Zoom ratio", qs(exifdata.at("Exif.Photo.DigitalZoomRatio")) }
-                    }
-                );
+                this->create_widgets(
+                    "Camera", {{"Make", qs(exifdata["Exif.Image.Make"])},
+                               {"Model", qs(exifdata["Exif.Image.Model"])},
+                               {"Focal length", focal_length},
+                               {"F-stop", aperture},
+                               {"Exposure time", exposure_time},
+                               {"ISO speed", iso},
+                               {"Flash", flash},
+                               {"Exposure program", exposure_program},
+                               {"White Balance", wb},
+                               {"Zoom ratio",
+                                qs(exifdata["Exif.Photo.DigitalZoomRatio"])}});
             }
             if (key == "Exif.Image.GPSTag") {
-                QStringList lat_dms = QString::fromStdString(
-                    exifdata.at("Exif.GPSInfo.GPSLatitude")
-                ).split(' ');
+                QStringList lat_dms =
+                    QString::fromStdString(exifdata["Exif.GPSInfo.GPSLatitude"])
+                        .split(' ');
                 QStringList lon_dms = QString::fromStdString(
-                    exifdata.at("Exif.GPSInfo.GPSLongitude")
-                ).split(' ');
+                                          exifdata["Exif.GPSInfo.GPSLongitude"])
+                                          .split(' ');
 
                 float latitude = to_decimal(
-                    lat_dms,
-                    exifdata.at("Exif.GPSInfo.GPSLatitudeRef")
-                );
+                    lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]);
                 float longitude = to_decimal(
-                    lon_dms,
-                    exifdata.at("Exif.GPSInfo.GPSLongitudeRef")
-                );
+                    lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]);
 
-                int altitude_ref = std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
+                int altitude_ref =
+                    std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
 
-                float altitude = parse_fraction(
-                    QString::fromStdString(
-                        exifdata["Exif.GPSInfo.GPSAltitude"]
-                    )
-                );
+                float altitude = parse_fraction(QString::fromStdString(
+                    exifdata["Exif.GPSInfo.GPSAltitude"]));
 
                 if (altitude_ref == 1) {
                     altitude = -altitude;
                 }
 
-                this->create_widgets(
-                    "GPS",
-                    {
-                        { "Latitude", QString::number(latitude) },
-                        { "Longitude", QString::number(longitude) },
-                        { "Altitude", QString::number(altitude) }
-                    }
-                );
+                this->create_widgets("GPS",
+                                     {{"Latitude", QString::number(latitude)},
+                                      {"Longitude", QString::number(longitude)},
+                                      {"Altitude", QString::number(altitude)}});
             }
         }
 
@@ -406,14 +410,9 @@ private:
 
     void simulateMetadataUpdate() {
         QString filename = QFileDialog::getOpenFileName(
-            this,
-            "Open file",
-            "",
-            "Images (*.png; *.xpm; *.jpg; *.heic)"
-        );
-         std::unique_ptr<Exiv2::Image> image = Exiv2::ImageFactory::open(
-            filename.toStdString()
-        );
+            this, "Open file", "", "Images (*.png; *.xpm; *.jpg; *.heic)");
+        std::unique_ptr<Exiv2::Image> image =
+            Exiv2::ImageFactory::open(filename.toStdString());
         image->readMetadata();
 
         Exiv2::ExifData& exif_data = image->exifData();
@@ -428,7 +427,7 @@ private:
     }
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
     MainWindow window;
