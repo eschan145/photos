@@ -12,6 +12,7 @@
 #include <QMap>
 #include <QPair>
 #include <QPalette>
+#include <QPixmap>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QString>
@@ -86,6 +87,9 @@ class MainWindow : public QMainWindow {
         QPushButton* open_button = new QPushButton("Open image");
         this->image_layout->addWidget(open_button);
 
+        image_label = new QLabel;
+        this->image_layout->addWidget(image_label);
+
         QWidget* metadata_layoutw = new QWidget;
         this->metadata_layout = new QVBoxLayout(metadata_layoutw);
         metadata_layoutw->setLayout(this->metadata_layout);
@@ -97,7 +101,7 @@ class MainWindow : public QMainWindow {
         this->main_layout->addWidget(scroll_area);
 
         connect(open_button, &QPushButton::clicked, this,
-                &MainWindow::simulateMetadataUpdate);
+                &MainWindow::load_image);
 
         QList<QPair<QString, QString>> metadata = {};
     }
@@ -107,6 +111,7 @@ class MainWindow : public QMainWindow {
     QVBoxLayout* image_layout;
     QVBoxLayout* metadata_layout;
     QWidget* central_widget;
+    QLabel* image_label;
 
     void create_widgets(const QString& title,
                         const QList<MetadataField>& values,
@@ -408,9 +413,19 @@ class MainWindow : public QMainWindow {
         return metadata;
     }
 
-    void simulateMetadataUpdate() {
+    void load_image() {
         QString filename = QFileDialog::getOpenFileName(
             this, "Open file", "", "Images (*.png; *.xpm; *.jpg; *.heic)");
+
+        QPixmap pixmap(filename);
+        if (pixmap.isNull()) {
+            std::cerr << "Failed to load image: " << filename.toStdString()
+                      << std::endl;
+            return;
+        }
+        this->image_label->setPixmap(pixmap);
+        this->image_label->show();
+
         std::unique_ptr<Exiv2::Image> image =
             Exiv2::ImageFactory::open(filename.toStdString());
         image->readMetadata();
