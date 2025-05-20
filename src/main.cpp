@@ -48,6 +48,7 @@ std::map<QString, FieldData> supported_fields = {
 
 };
 
+
 std::vector<std::string> split(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;
     std::stringstream ss(s);
@@ -258,7 +259,7 @@ class MainWindow : public QMainWindow {
 
         for (auto it = exif_data.begin(); it != exif_data.end(); ++it) {
             exifdata[it->key()] = it->value().toString();
-            std::cout << it->key() << "\n";
+            std::cout << it->key() << ": " << it->value().toString() << "\n";
         }
 
         for (const auto& pair : exif_data) {
@@ -389,7 +390,17 @@ class MainWindow : public QMainWindow {
                                {"Zoom ratio",
                                 qs(exifdata["Exif.Photo.DigitalZoomRatio"])}});
             }
-            if (key == "Exif.Image.GPSTag") {
+            if ((key == "Exif.Image.GPSTag")) {
+                if (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
+                    exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
+                    exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
+                    exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
+                    exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
+                    exifdata.contains("Exif.GPSInfo.GPSAltitudeRef"))) {
+                    std::cout << "Missing GPS metadata.";
+                    continue;
+                }
+
                 QStringList lat_dms =
                     QString::fromStdString(exifdata["Exif.GPSInfo.GPSLatitude"])
                         .split(' ');
