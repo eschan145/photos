@@ -21,6 +21,8 @@
 #include <iostream>
 #include <map>
 
+const int DATAPANEL_WIDTH = 350;
+
 struct FieldData {
     QString readable_name;
 };
@@ -74,7 +76,7 @@ inline QString qs(const std::string& string) {
 class MainWindow : public QMainWindow {
    public:
     MainWindow() {
-        this->setFixedSize(500, 400);
+        this->setFixedSize(700, 500);
         central_widget = new QWidget(this);
 
         this->main_layout = new QHBoxLayout(central_widget);
@@ -94,9 +96,16 @@ class MainWindow : public QMainWindow {
         this->metadata_layout = new QVBoxLayout(metadata_layoutw);
         metadata_layoutw->setLayout(this->metadata_layout);
 
+        this->field_layoutw = new QWidget;
+        this->field_layoutw->setMinimumWidth(DATAPANEL_WIDTH);
+        this->field_layoutw->setMaximumWidth(DATAPANEL_WIDTH);
+        this->field_layout = new QVBoxLayout(this->field_layoutw);
+        this->field_layoutw->setLayout(this->field_layout);
+
         QScrollArea* scroll_area = new QScrollArea;
         scroll_area->setWidgetResizable(true);
         scroll_area->setWidget(metadata_layoutw);
+        scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
         this->main_layout->addWidget(scroll_area);
 
@@ -111,16 +120,14 @@ class MainWindow : public QMainWindow {
     QVBoxLayout* image_layout;
     QVBoxLayout* metadata_layout;
     QWidget* central_widget;
+    QWidget* layoutw;
+    QVBoxLayout* field_layout;
+    QWidget* field_layoutw;
     QLabel* image_label;
 
     void create_widgets(const QString& title,
                         const QList<MetadataField>& values,
                         DataType type = DataType::STRING, int max_rows = 1) {
-        QWidget* layoutw = new QWidget;
-        layoutw->setFixedWidth(300);
-
-        QVBoxLayout* layout = new QVBoxLayout(layoutw);
-
         /*
         - text_layout (VBox)
             - row_layout (HBox)
@@ -181,15 +188,17 @@ class MainWindow : public QMainWindow {
 
         } else if (type == DataType::DATE) {
             QHBoxLayout* data_layout = new QHBoxLayout;
+            data_layout->setContentsMargins(0, 0, 0, 0);
             data_layoutw->setLayout(data_layout);
 
             QDateTimeEdit* dt_edit = new QDateTimeEdit;
+            dt_edit->setFixedWidth(290);
             dt_edit->setDisplayFormat("MMMM d, h:mm:ss AP");
             dt_edit->setCalendarPopup(true);
             dt_edit->setDateTime(
                 QDateTime::fromString(values[0].value, "yyyy:MM:dd HH:mm:ss"));
-
-            data_layout->addWidget(dt_edit);
+            data_layout->addWidget(dt_edit, 0, Qt::AlignLeft);
+            data_layout->addStretch();
         }
         QLabel* label = new QLabel(title);
         label->setFont(QFont("Segoe UI", 11));
@@ -197,10 +206,10 @@ class MainWindow : public QMainWindow {
 
         label->setLineWidth(0);
 
-        layout->addWidget(label);
-        layout->addWidget(data_layoutw);
+        this->field_layout->addWidget(label);
+        this->field_layout->addWidget(data_layoutw);
 
-        this->metadata_layout->addWidget(layoutw, 0, Qt::AlignTop);
+        this->metadata_layout->addWidget(this->field_layoutw, 0, Qt::AlignTop);
     }
 
     float parse_fraction(const QString& fraction) {
@@ -423,7 +432,10 @@ class MainWindow : public QMainWindow {
                       << std::endl;
             return;
         }
-        this->image_label->setPixmap(pixmap);
+        QSize max_size(this->width() - DATAPANEL_WIDTH, this->height());
+        QPixmap scaled_pixmap = pixmap.scaled(max_size, Qt::KeepAspectRatio,
+                                              Qt::SmoothTransformation);
+        this->image_label->setPixmap(scaled_pixmap);
         this->image_label->show();
 
         std::unique_ptr<Exiv2::Image> image =
