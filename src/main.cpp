@@ -1,6 +1,6 @@
 #include "pch.h"
 
-const int DATAPANEL_WIDTH = 350;
+const int DATAPANEL_WIDTH = 370;
 
 struct FieldData {
     QString readable_name;
@@ -108,7 +108,6 @@ class MainWindow : public QMainWindow {
         scroll_area->setWidgetResizable(true);
         scroll_area->setWidget(metadata_layoutw);
         scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        //scroll_area->setSpacing(0);
         metadata_layout->setSpacing(0);
         metadata_layout->setContentsMargins(0, 0, 0, 0);
 
@@ -141,7 +140,6 @@ class MainWindow : public QMainWindow {
         QHBoxLayout* container_layout = new QHBoxLayout;
         container->setLayout(container_layout);
         container_layout->setContentsMargins(0, 0, 0, 0);
-        container_layout->setSpacing(0);
 
         QSvgWidget* icon_widget = new QSvgWidget(icon);
         icon_widget->setFixedSize(24, 24);
