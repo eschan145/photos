@@ -1,28 +1,4 @@
-#include <Exiv2/exiv2.hpp>
-#include <QApplication>
-#include <QDateTime>
-#include <QDateTimeEdit>
-#include <QFileDialog>
-#include <QFont>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QList>
-#include <QMainWindow>
-#include <QMap>
-#include <QPair>
-#include <QPalette>
-#include <QPixmap>
-#include <QPushButton>
-#include <QScrollArea>
-#include <QSizePolicy>
-#include <QSpacerItem>
-#include <QString>
-#include <QTextEdit>
-#include <QWidget>
-#include <QtSvgWidgets/QSvgWidget>
-#include <iostream>
-#include <map>
+#include "pch.h"
 
 const int DATAPANEL_WIDTH = 350;
 
@@ -128,16 +104,13 @@ class MainWindow : public QMainWindow {
         this->metadata_layout = new QVBoxLayout(metadata_layoutw);
         metadata_layoutw->setLayout(this->metadata_layout);
 
-        this->field_layoutw = new QWidget;
-        this->field_layoutw->setMinimumWidth(DATAPANEL_WIDTH);
-        this->field_layoutw->setMaximumWidth(DATAPANEL_WIDTH);
-        this->field_layout = new QVBoxLayout(this->field_layoutw);
-        this->field_layoutw->setLayout(this->field_layout);
-
         QScrollArea* scroll_area = new QScrollArea;
         scroll_area->setWidgetResizable(true);
         scroll_area->setWidget(metadata_layoutw);
         scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        //scroll_area->setSpacing(0);
+        metadata_layout->setSpacing(0);
+        metadata_layout->setContentsMargins(0, 0, 0, 0);
 
         this->main_layout->addWidget(scroll_area);
 
@@ -252,7 +225,7 @@ class MainWindow : public QMainWindow {
         right_layout->addWidget(data_layoutw);
         container_layout->addWidget(right_side);
 
-        this->field_layout->addWidget(container);
+        this->field_layout->addWidget(container, 0, Qt::AlignTop | Qt::AlignLeft);
         this->field_layout->addItem(
             new QSpacerItem(0, 15, QSizePolicy::Minimum, QSizePolicy::Fixed)
         );
@@ -518,7 +491,9 @@ class MainWindow : public QMainWindow {
 
         // Prevent dangling pointer when its uninitialized
         this->field_layoutw = new QWidget;
-        this->field_layout = new QVBoxLayout;
+        this->field_layoutw->setMinimumWidth(DATAPANEL_WIDTH);
+        this->field_layoutw->setMaximumWidth(DATAPANEL_WIDTH);
+        this->field_layout = new QVBoxLayout(this->field_layoutw);
         this->field_layoutw->setLayout(this->field_layout);
 
         QSize max_size(this->width() - DATAPANEL_WIDTH, this->height());
@@ -545,8 +520,6 @@ class MainWindow : public QMainWindow {
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-
-    app.setStyleSheet("* { border: 1px solid rgba(255,0,0,0.3); }");
 
     MainWindow window;
     window.show();
