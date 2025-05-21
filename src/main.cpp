@@ -252,9 +252,10 @@ class MainWindow : public QMainWindow {
         right_layout->addWidget(data_layoutw);
         container_layout->addWidget(right_side);
 
-        this->field_layout->addItem(
-            new QSpacerItem(0, 15, QSizePolicy::Minimum, QSizePolicy::Fixed));
         this->field_layout->addWidget(container);
+        this->field_layout->addItem(
+            new QSpacerItem(0, 15, QSizePolicy::Minimum, QSizePolicy::Fixed)
+        );
         this->metadata_layout->addWidget(this->field_layoutw, 0, Qt::AlignTop);
     }
 
@@ -544,6 +545,8 @@ class MainWindow : public QMainWindow {
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
+
+    app.setStyleSheet("* { border: 1px solid rgba(255,0,0,0.3); }");
 
     MainWindow window;
     window.show();
