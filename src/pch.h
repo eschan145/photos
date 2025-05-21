@@ -1,0 +1,27 @@
+#pragma once
+
+#include <Exiv2/exiv2.hpp>
+#include <QApplication>
+#include <QDateTime>
+#include <QDateTimeEdit>
+#include <QFileDialog>
+#include <QFont>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QMainWindow>
+#include <QMap>
+#include <QPair>
+#include <QPalette>
+#include <QPixmap>
+#include <QPushButton>
+#include <QScrollArea>
+#include <QSizePolicy>
+#include <QSpacerItem>
+#include <QString>
+#include <QTextEdit>
+#include <QWidget>
+#include <QtSvgWidgets/QSvgWidget>
+#include <iostream>
+#include <map>
