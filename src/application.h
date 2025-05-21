@@ -1,4 +1,8 @@
+#pragma once
+
 #include "pch.h"
+
+#include "utils.h"
 
 const int DATAPANEL_WIDTH = 370;
 
@@ -21,15 +25,9 @@ class AssetManager {
     QString operator[](const QString& key);
 };
 
-AssetManager icons;
+extern AssetManager icons;
 
 void clear_layout(QLayout* layout);
-
-float parse_rational(const std::string& string);
-
-float parse_fraction(const QString& fraction);
-
-float to_decimal(const QStringList& list, const std::string& ref);
 
 inline QString qs(const std::string& string);
 
