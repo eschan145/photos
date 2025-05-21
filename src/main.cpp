@@ -168,9 +168,11 @@ class MainWindow : public QMainWindow {
         QHBoxLayout* container_layout = new QHBoxLayout;
         container->setLayout(container_layout);
         container_layout->setContentsMargins(0, 0, 0, 0);
+        container_layout->setSpacing(0);
 
         QSvgWidget* icon_widget = new QSvgWidget(icon);
-        icon_widget->setFixedSize(32, 32);
+        icon_widget->setFixedSize(24, 24);
+        icon_widget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         container_layout->addWidget(icon_widget, 0, Qt::AlignTop);
 
         // Right side: title and data
