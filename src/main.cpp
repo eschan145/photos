@@ -48,6 +48,22 @@ std::map<QString, FieldData> supported_fields = {
 
 };
 
+void clear_layout(QLayout* layout) {
+    if (!layout) return;
+    QLayoutItem* item;
+    while (true) {
+        item = layout->takeAt(0);
+        if (!item) break;
+
+        QWidget* widget = item->widget();
+        QLayout* child_layout = item->layout();
+
+        if (widget) widget->deleteLater();
+        if (child_layout) clear_layout(child_layout);
+
+        delete item;
+    }
+}
 
 std::vector<std::string> split(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;
@@ -443,6 +459,13 @@ class MainWindow : public QMainWindow {
                       << std::endl;
             return;
         }
+        clear_layout(this->metadata_layout);
+
+        // Prevent dangling pointer when its uninitialized
+        this->field_layoutw = new QWidget;
+        this->field_layout = new QVBoxLayout;
+        this->field_layoutw->setLayout(this->field_layout);
+
         QSize max_size(this->width() - DATAPANEL_WIDTH, this->height());
         QPixmap scaled_pixmap = pixmap.scaled(max_size, Qt::KeepAspectRatio,
                                               Qt::SmoothTransformation);
