@@ -15,6 +15,8 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSizePolicy>
+#include <QSpacerItem>
 #include <QString>
 #include <QTextEdit>
 #include <QWidget>
@@ -223,6 +225,8 @@ class MainWindow : public QMainWindow {
 
         label->setLineWidth(0);
 
+        this->field_layout->addItem(
+            new QSpacerItem(0, 15, QSizePolicy::Minimum, QSizePolicy::Fixed));
         this->field_layout->addWidget(label);
         this->field_layout->addWidget(data_layoutw);
 
@@ -408,11 +412,11 @@ class MainWindow : public QMainWindow {
             }
             if ((key == "Exif.Image.GPSTag")) {
                 if (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
-                    exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
-                    exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
-                    exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
-                    exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
-                    exifdata.contains("Exif.GPSInfo.GPSAltitudeRef"))) {
+                      exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
+                      exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
+                      exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
+                      exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
+                      exifdata.contains("Exif.GPSInfo.GPSAltitudeRef"))) {
                     std::cout << "Missing GPS metadata.";
                     continue;
                 }
