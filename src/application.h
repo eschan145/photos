@@ -33,9 +33,9 @@ float to_decimal(const QStringList& list, const std::string& ref);
 
 inline QString qs(const std::string& string);
 
-class MainWindow : public QMainWindow {
+class Application : public QMainWindow {
    public:
-    MainWindow();
+    Application();
 
    private:
     QHBoxLayout* main_layout;
