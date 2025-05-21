@@ -20,6 +20,7 @@
 #include <QString>
 #include <QTextEdit>
 #include <QWidget>
+#include <QtSvgWidgets/QSvgWidget>
 #include <iostream>
 #include <map>
 
@@ -49,6 +50,18 @@ std::map<QString, FieldData> supported_fields = {
     {"Exif.Photo.Flash", {"Flash"}},
 
 };
+
+
+class AssetManager {
+ public:
+    AssetManager() = default;
+
+    QString operator[](const QString& key) {
+        return "assets/" + key + ".svg";
+    }
+};
+
+AssetManager icons;
 
 void clear_layout(QLayout* layout) {
     if (!layout) return;
@@ -144,21 +157,41 @@ class MainWindow : public QMainWindow {
     QWidget* field_layoutw;
     QLabel* image_label;
 
-    void create_widgets(const QString& title,
-                        const QList<MetadataField>& values,
-                        DataType type = DataType::STRING, int max_rows = 1) {
-        /*
-        - text_layout (VBox)
-            - row_layout (HBox)
-        */
+    void create_widgets(
+        const QString& title,
+        const QList<MetadataField>& values,
+        const QString& icon = "",
+        DataType type = DataType::STRING,
+        int max_rows = 1
+    ) {
+        QWidget* container = new QWidget;
+        QHBoxLayout* container_layout = new QHBoxLayout;
+        container->setLayout(container_layout);
+        container_layout->setContentsMargins(0, 0, 0, 0);
+
+        QSvgWidget* icon_widget = new QSvgWidget(icon);
+        icon_widget->setFixedSize(32, 32);
+        container_layout->addWidget(icon_widget, 0, Qt::AlignTop);
+
+        // Right side: title and data
+        QWidget* right_side = new QWidget;
+        QVBoxLayout* right_layout = new QVBoxLayout;
+        right_side->setLayout(right_layout);
+        right_layout->setContentsMargins(0, 0, 0, 0);
+
+        QLabel* label = new QLabel(title);
+        label->setFont(QFont("Segoe UI", 11));
+        label->setFrameStyle(QFrame::Box | QFrame::Plain);
+        label->setLineWidth(0);
+
+        right_layout->addWidget(label);
 
         QWidget* data_layoutw = new QWidget;
 
         if (type == DataType::STRING) {
             QVBoxLayout* data_layout = new QVBoxLayout;
-            data_layoutw->setLayout(data_layout);
-
             data_layout->setContentsMargins(0, 0, 0, 0);
+            data_layoutw->setLayout(data_layout);
 
             int total = values.size();
             int columns = 5;
@@ -168,11 +201,8 @@ class MainWindow : public QMainWindow {
             for (int row = 0; row < rows; ++row) {
                 QWidget* row_layoutw = new QWidget;
                 QHBoxLayout* row_layout = new QHBoxLayout;
-                row_layoutw->setLayout(row_layout);
-
                 row_layout->setContentsMargins(0, 0, 5, 0);
-
-                data_layout->addWidget(row_layoutw, 0, Qt::AlignTop);
+                row_layoutw->setLayout(row_layout);
 
                 for (int col = 0; col < columns; ++col) {
                     int index = row * columns + col;
@@ -182,10 +212,7 @@ class MainWindow : public QMainWindow {
                     edit->setText(values[counter].value);
                     edit->setToolTip(values[counter].name);
                     edit->setStyleSheet(
-                        "QLineEdit {"
-                        "  background: transparent;"
-                        "  border: none;"
-                        "}");
+                        "QLineEdit { background: transparent; border: none; }");
 
                     auto resize = [edit]() {
                         QFontMetrics metrics(edit->font());
@@ -197,11 +224,11 @@ class MainWindow : public QMainWindow {
                     connect(edit, &QLineEdit::textChanged, resize);
 
                     row_layout->addWidget(edit, 0, Qt::AlignLeft);
-
                     counter++;
                 }
 
                 row_layout->addStretch();
+                data_layout->addWidget(row_layoutw, 0, Qt::AlignTop);
             }
             data_layout->addStretch();
 
@@ -219,17 +246,13 @@ class MainWindow : public QMainWindow {
             data_layout->addWidget(dt_edit, 0, Qt::AlignLeft);
             data_layout->addStretch();
         }
-        QLabel* label = new QLabel(title);
-        label->setFont(QFont("Segoe UI", 11));
-        label->setFrameStyle(QFrame::Box | QFrame::Plain);
 
-        label->setLineWidth(0);
+        right_layout->addWidget(data_layoutw);
+        container_layout->addWidget(right_side);
 
         this->field_layout->addItem(
             new QSpacerItem(0, 15, QSizePolicy::Minimum, QSizePolicy::Fixed));
-        this->field_layout->addWidget(label);
-        this->field_layout->addWidget(data_layoutw);
-
+        this->field_layout->addWidget(container);
         this->metadata_layout->addWidget(this->field_layoutw, 0, Qt::AlignTop);
     }
 
@@ -286,12 +309,18 @@ class MainWindow : public QMainWindow {
             std::string key = pair.key();
             QString value = qs(pair.toString());
             if (key == "Exif.Photo.DateTimeOriginal") {
-                std::cout << exifdata["Exif.Photo.DateTimeOriginal"] << "\n";
                 this->create_widgets(
                     "Date",
-                    {{"Date", qs(exifdata["Exif.Photo.DateTimeOriginal"]),
-                      DataType::DATE}},
-                    DataType::DATE);
+                    {
+                        {
+                            "Date",
+                            qs(exifdata["Exif.Photo.DateTimeOriginal"]),
+                            DataType::DATE
+                        }
+                    },
+                    icons["date"],
+                    DataType::DATE
+                );
             }
             if (key == "Exif.Image.ImageWidth") {
                 auto rational = [&](const std::string& tag) -> float {
@@ -319,10 +348,17 @@ class MainWindow : public QMainWindow {
 
                 this->create_widgets(
                     "Dimensions",
-                    {{"Dimensions", qs(exifdata["Exif.Image.ImageWidth"]) +
-                                        " x " +
-                                        qs(exifdata["Exif.Image.ImageLength"])},
-                     {"DPI", QString::number(dpi)}});
+                    {
+                        {
+                            "Dimensions",
+                            qs(exifdata["Exif.Image.ImageWidth"]) +
+                            " x " +
+                            qs(exifdata["Exif.Image.ImageLength"])
+                        },
+                        {"DPI", QString::number(dpi)}
+                    },
+                    icons["dimension"]
+                );
             }
             if (key == "Exif.Photo.ExposureTime") {
                 QString focal_length;
@@ -408,7 +444,7 @@ class MainWindow : public QMainWindow {
                                {"Exposure program", exposure_program},
                                {"White Balance", wb},
                                {"Zoom ratio",
-                                qs(exifdata["Exif.Photo.DigitalZoomRatio"])}});
+                                qs(exifdata["Exif.Photo.DigitalZoomRatio"])}}, icons["camera"]);
             }
             if ((key == "Exif.Image.GPSTag")) {
                 if (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
@@ -422,31 +458,43 @@ class MainWindow : public QMainWindow {
                 }
 
                 QStringList lat_dms =
-                    QString::fromStdString(exifdata["Exif.GPSInfo.GPSLatitude"])
-                        .split(' ');
-                QStringList lon_dms = QString::fromStdString(
-                                          exifdata["Exif.GPSInfo.GPSLongitude"])
-                                          .split(' ');
+                    QString::fromStdString(
+                        exifdata["Exif.GPSInfo.GPSLatitude"]
+                    ).split(' ');
+                QStringList lon_dms =
+                    QString::fromStdString(
+                        exifdata["Exif.GPSInfo.GPSLongitude"]
+                    ).split(' ');
 
                 float latitude = to_decimal(
-                    lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]);
+                    lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]
+                );
                 float longitude = to_decimal(
-                    lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]);
+                    lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]
+                );
 
                 int altitude_ref =
                     std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
 
-                float altitude = parse_fraction(QString::fromStdString(
-                    exifdata["Exif.GPSInfo.GPSAltitude"]));
+                float altitude = parse_fraction(
+                    QString::fromStdString(
+                        exifdata["Exif.GPSInfo.GPSAltitude"]
+                    )
+                );
 
                 if (altitude_ref == 1) {
                     altitude = -altitude;
                 }
 
-                this->create_widgets("GPS",
-                                     {{"Latitude", QString::number(latitude)},
-                                      {"Longitude", QString::number(longitude)},
-                                      {"Altitude", QString::number(altitude)}});
+                this->create_widgets(
+                    "GPS",
+                    {
+                        {"Latitude", QString::number(latitude)},
+                        {"Longitude", QString::number(longitude)},
+                        {"Altitude", QString::number(altitude)}
+                    },
+                    icons["location"]
+                );
             }
         }
 
