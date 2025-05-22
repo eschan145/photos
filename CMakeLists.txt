@@ -30,3 +30,5 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(application ${SOURCES})
 target_precompile_headers(application PRIVATE src/pch.h)
 target_link_libraries(application PRIVATE libboost_filesystem-mt Qt6::Widgets Qt6::Svg Qt6::SvgWidgets exiv2)
+
+file(COPY assets DESTINATION build/assets)
