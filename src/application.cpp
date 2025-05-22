@@ -429,13 +429,12 @@ QList<QPair<QString, QString>> Application::process_metadata(
         );
     }
     if (exifdata.contains("Exif.Image.GPSTag") &&
-        (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
-                exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
-                exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
-                exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
-                exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
-                exifdata.contains("Exif.GPSInfo.GPSAltitudeRef")))) {
-            // std::cout << "Missing GPS metadata.";
+        exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
+        exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
+        exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
+        exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
+        exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
+        exifdata.contains("Exif.GPSInfo.GPSAltitudeRef")) {
 
         QStringList lat_dms =
             QString::fromStdString(
