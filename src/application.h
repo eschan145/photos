@@ -10,7 +10,7 @@ struct FieldData {
     QString readable_name;
 };
 
-enum class DataType { STRING, DATE };
+enum class DataType { STRING, DATE, MULTISTRING };
 
 struct MetadataField {
     QString name;
@@ -45,11 +45,17 @@ class Application : public QMainWindow {
     QWidget* field_layoutw;
     QLabel* image_label;
 
+    std::unique_ptr<Exiv2::Image> image;
+    Exiv2::ExifData exif_data;
+
+    std::map<std::string, std::string> metadata;
+
     void create_widgets(
         const QString& title,
         const QList<MetadataField>& values,
         const QString& icon = "",
         DataType type = DataType::STRING,
+        std::string key = "",
         int max_rows = 1
     );
 
@@ -58,5 +64,6 @@ class Application : public QMainWindow {
     );
 
     void load_image();
+    void refresh_metadata();
 };
 

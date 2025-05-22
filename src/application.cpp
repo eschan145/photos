@@ -57,10 +57,12 @@ Application::Application() {
 
     this->main_layout->addWidget(scroll_area);
 
-    connect(open_button, &QPushButton::clicked, this,
-            &Application::load_image);
-
-    QList<QPair<QString, QString>> metadata = {};
+    connect(
+        open_button,
+        &QPushButton::clicked,
+        this,
+        &Application::load_image
+    );
 }
 
 void Application::create_widgets(
@@ -68,6 +70,7 @@ void Application::create_widgets(
     const QList<MetadataField>& values,
     const QString& icon,
     DataType type,
+    std::string key,
     int max_rows
 ) {
     QWidget* container = new QWidget;
@@ -86,12 +89,14 @@ void Application::create_widgets(
     right_side->setLayout(right_layout);
     right_layout->setContentsMargins(0, 0, 0, 0);
 
-    QLabel* label = new QLabel(title);
-    label->setFont(QFont("Segoe UI", 11));
-    label->setFrameStyle(QFrame::Box | QFrame::Plain);
-    label->setLineWidth(0);
+    if (type != DataType::MULTISTRING) {
+        QLabel* label = new QLabel(title);
+        label->setFont(QFont("Segoe UI", 11));
+        label->setFrameStyle(QFrame::Box | QFrame::Plain);
+        label->setLineWidth(0);
 
-    right_layout->addWidget(label);
+        right_layout->addWidget(label);
+    }
 
     QWidget* data_layoutw = new QWidget;
 
@@ -152,6 +157,32 @@ void Application::create_widgets(
             QDateTime::fromString(values[0].value, "yyyy:MM:dd HH:mm:ss"));
         data_layout->addWidget(dt_edit, 0, Qt::AlignLeft);
         data_layout->addStretch();
+    } else if (type == DataType::MULTISTRING) {
+        QLineEdit* line_edit = new QLineEdit;
+        line_edit->setFixedWidth(290);
+        line_edit->setFixedHeight(30);
+        line_edit->setPlaceholderText(title);
+        line_edit->setText(values[0].value);
+        right_layout->addWidget(line_edit);
+
+        if (!key.empty()) {
+            
+            connect(
+                line_edit,
+                &QLineEdit::textChanged,
+                this,
+                
+                [this, key](const QString& text) {
+                    this->metadata[key] = text.toStdString();
+                    this->refresh_metadata();
+                }
+            );
+        }
+        // UAF: Important to only pass [this, key] for lambda to own full copy
+        // instead of [&] to own reference in connect(). Otherwise the key var
+        // would be immediately destroyed after lambda and std::string would
+        // try to allocate 1.5 million characters from a dangling pointer such
+        // as 0x10017ee40, throwing SIGSEGV or std::bad_alloc.
     }
 
     right_layout->addWidget(data_layoutw);
@@ -177,6 +208,20 @@ QList<QPair<QString, QString>> Application::process_metadata(
     for (const auto& pair : exif_data) {
         std::string key = pair.key();
         QString value = qs(pair.toString());
+        if (key == "Exif.Image.ImageDescription") {
+            this->create_widgets(
+                "Description",
+                {
+                    {
+                        "Description",
+                        qs(exifdata["Exif.Image.ImageDescription"])
+                    }
+                },
+                icons["description"],
+                DataType::MULTISTRING,
+                "Exif.Image.ImageDescription"
+            );
+        }
         if (key == "Exif.Photo.DateTimeOriginal") {
             this->create_widgets(
                 "Date",
@@ -405,17 +450,23 @@ void Application::load_image() {
     this->image_label->setPixmap(scaled_pixmap);
     this->image_label->show();
 
-    std::unique_ptr<Exiv2::Image> image =
-        Exiv2::ImageFactory::open(filename.toStdString());
-    image->readMetadata();
+    this->image = Exiv2::ImageFactory::open(filename.toStdString());
+    this->image->readMetadata();
 
-    Exiv2::ExifData& exif_data = image->exifData();
+    this->exif_data = this->image->exifData();
 
-    QList<QPair<QString, QString>> metadata;
-
-    if (exif_data.empty()) {
+    if (this->exif_data.empty()) {
         throw std::runtime_error("Empty exif data!");
     } else {
-        metadata = process_metadata(exif_data);
+        process_metadata(this->exif_data);
     }
+}
+
+void Application::refresh_metadata() {
+    for (auto& [key, value] : this->metadata) {
+        this->exif_data[key] = value;
+    }
+
+    this->image->setExifData(this->exif_data);
+    this->image->writeMetadata();
 }

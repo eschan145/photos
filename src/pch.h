@@ -25,3 +25,5 @@
 #include <QtSvgWidgets/QSvgWidget>
 #include <iostream>
 #include <map>
+#include <sstream>
+#include <cctype>

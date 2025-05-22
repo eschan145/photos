@@ -52,4 +52,37 @@ float to_decimal(const QStringList& list, const std::string& ref) {
     return decimal;
 }
 
+std::string read_bytes(std::string input) {
+    size_t start = input.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return input;
+    }
+    size_t end = input.find_last_not_of(" \t\n\r");
+    input = input.substr(start, end - start + 1);
+
+    bool has_digit = false;
+    for (char c : input) {
+        if (!std::isdigit(c) && !std::isspace(c)) {
+            return input;
+        }
+        if (std::isdigit(c)) has_digit = true;
+    }
+    if (!has_digit) return input;
+
+    std::istringstream iss(input);
+    std::string result;
+    int byte_value;
+
+    while (iss >> byte_value) {
+        if (byte_value < 0 || byte_value > 255) {
+            return input;
+        }
+        result.push_back(static_cast<char>(byte_value));
+    }
+
+    if (result.empty()) return input;
+
+    return result;
+}
+
 }  // namespace Utils
