@@ -10,7 +10,7 @@ struct FieldData {
     QString readable_name;
 };
 
-enum class DataType { STRING, DATE, MULTISTRING };
+enum class DataType { STRING, DATE, MULTISTRING, MULTILINE };
 
 struct MetadataField {
     QString name;

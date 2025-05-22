@@ -89,7 +89,7 @@ void Application::create_widgets(
     right_side->setLayout(right_layout);
     right_layout->setContentsMargins(0, 0, 0, 0);
 
-    if (type != DataType::MULTISTRING) {
+    if (type != DataType::MULTISTRING && type != DataType::MULTILINE) {
         QLabel* label = new QLabel(title);
         label->setFont(QFont("Segoe UI", 11));
         label->setFrameStyle(QFrame::Box | QFrame::Plain);
@@ -166,7 +166,6 @@ void Application::create_widgets(
         right_layout->addWidget(line_edit);
 
         if (!key.empty()) {
-            
             connect(
                 line_edit,
                 &QLineEdit::textChanged,
@@ -184,6 +183,39 @@ void Application::create_widgets(
         // try to allocate 1.5 million characters from a dangling pointer such
         // as 0x10017ee40, throwing SIGSEGV or std::bad_alloc.
     }
+    else if (type == DataType::MULTILINE) {
+        QTextEdit* text_edit = new QTextEdit;
+        text_edit->setFixedWidth(290);
+        text_edit->setMaximumHeight(500);
+        text_edit->setPlaceholderText(title);
+        text_edit->setText(values[0].value);
+        
+        right_layout->addWidget(text_edit);
+
+        auto resize = [this, text_edit, key]() {
+            int height = static_cast<int>(text_edit->document()->size().height());
+            int margin = text_edit->contentsMargins().top() +
+                text_edit->contentsMargins().bottom();
+            text_edit->setFixedHeight(std::max(30, height + margin));
+            this->metadata[key] = text_edit->toMarkdown().toStdString();
+            this->refresh_metadata();
+        };
+        if (!key.empty()) {
+            connect(
+                text_edit,
+                &QTextEdit::textChanged,
+                this,
+                resize
+            );
+        }
+
+        // Resize text edit to fit new content after text is updated by Qt
+        QTimer::singleShot(0, this, resize);
+
+
+        // Enable event handler first before resizing
+        
+    }
 
     right_layout->addWidget(data_layoutw);
     container_layout->addWidget(right_side);
@@ -196,7 +228,8 @@ void Application::create_widgets(
 }
 
 QList<QPair<QString, QString>> Application::process_metadata(
-    Exiv2::ExifData& exif_data) {
+    Exiv2::ExifData& exif_data
+) {
     QList<QPair<QString, QString>> metadata;
     std::map<std::string, std::string> exifdata;
 
@@ -229,11 +262,11 @@ QList<QPair<QString, QString>> Application::process_metadata(
             {
                 {
                     "Description",
-                    qs(exifdata["Exif.Image.ImageDescription"])
+                    qs(Utils::read_bytes(exifdata["Exif.Image.ImageDescription"]))
                 }
             },
             icons["description"],
-            DataType::MULTISTRING,
+            DataType::MULTILINE,
             "Exif.Image.ImageDescription"
         );
     }

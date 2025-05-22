@@ -22,6 +22,7 @@
 #include <QString>
 #include <QTextEdit>
 #include <QWidget>
+#include <QTimer>
 #include <QtSvgWidgets/QSvgWidget>
 #include <iostream>
 #include <map>
