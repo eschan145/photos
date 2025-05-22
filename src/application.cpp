@@ -71,6 +71,7 @@ void Application::create_widgets(
     const QString& icon,
     DataType type,
     std::string key,
+    bool is_binary,
     int max_rows
 ) {
     QWidget* container = new QWidget;
@@ -153,7 +154,7 @@ void Application::create_widgets(
         dt_edit->setFixedWidth(290);
         dt_edit->setDisplayFormat("MMMM d, h:mm:ss AP");
         dt_edit->setCalendarPopup(true);
-        dt_edit->setDateTime(
+        dt_edit->setDateTime( 
             QDateTime::fromString(values[0].value, "yyyy:MM:dd HH:mm:ss"));
         data_layout->addWidget(dt_edit, 0, Qt::AlignLeft);
         data_layout->addStretch();
@@ -170,12 +171,27 @@ void Application::create_widgets(
                 line_edit,
                 &QLineEdit::textChanged,
                 this,
-                
-                [this, key](const QString& text) {
-                    this->metadata[key] = text.toStdString();
+                [this, is_binary, key](const QString& text) {
+                    if (is_binary) {
+                        std::u16string utf16 = text.toStdU16String();
+                        std::ostringstream oss;
+
+                        for (char16_t ch : utf16) {
+                            oss << static_cast<int>(ch & 0xFF) << ' '
+                                << static_cast<int>((ch >> 8) & 0xFF) << ' ';
+                        }
+
+                        oss << "0 0";
+
+                        this->metadata[key] = oss.str();
+                    }
+                    else {
+                        this->metadata[key] = text.toStdString();
+                    }
                     this->refresh_metadata();
                 }
             );
+
         }
         // UAF: Important to only pass [this, key] for lambda to own full copy
         // instead of [&] to own reference in connect(). Otherwise the key var
@@ -211,10 +227,6 @@ void Application::create_widgets(
 
         // Resize text edit to fit new content after text is updated by Qt
         QTimer::singleShot(0, this, resize);
-
-
-        // Enable event handler first before resizing
-        
     }
 
     right_layout->addWidget(data_layoutw);
@@ -253,7 +265,8 @@ QList<QPair<QString, QString>> Application::process_metadata(
             },
             icons["title"],
             DataType::MULTISTRING,
-            "Exif.Image.XPTitle"
+            "Exif.Image.XPTitle",
+            true
         );
     }
     if (exifdata.contains("Exif.Image.XPTitle")) {
@@ -508,9 +521,15 @@ void Application::load_image() {
 }
 
 void Application::refresh_metadata() {
+    if (this->metadata.empty()) return;
+
     for (auto& [key, value] : this->metadata) {
         this->exif_data[key] = value;
+        std::cout << key << ": " << value << "\n";
     }
+    this->metadata.clear();
+
+    std::cout << "Written metadata\n";
 
     this->image->setExifData(this->exif_data);
     this->image->writeMetadata();

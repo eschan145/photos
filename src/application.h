@@ -56,6 +56,7 @@ class Application : public QMainWindow {
         const QString& icon = "",
         DataType type = DataType::STRING,
         std::string key = "",
+        bool binary = false,
         int max_rows = 1
     );
 
