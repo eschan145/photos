@@ -254,6 +254,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
         std::string key = pair.key();
         QString value = qs(pair.toString());
     }
+
     if (exifdata.contains("Exif.Image.XPTitle")) {
         this->create_widgets(
             "Title",
@@ -475,18 +476,29 @@ QList<QPair<QString, QString>> Application::process_metadata(
             icons["location"]
         );
     }
+    this->create_widgets(
+        "Source",
+        {
+            {
+                "Source",
+                this->filepath
+            }
+        },
+        icons["folder"],
+        DataType::MULTISTRING
+    );
 
     return metadata;
 }
 
 void Application::load_image() {
-    QString filename = QFileDialog::getOpenFileName(
+    this->filepath = QFileDialog::getOpenFileName(
         this, "Open file", "", "Images (*.png; *.xpm; *.jpg; *.heic)");
 
-    QPixmap pixmap(filename);
+    QPixmap pixmap(this->filepath);
     if (pixmap.isNull()) {
-        std::cerr << "Failed to load image: " << filename.toStdString()
-                    << std::endl;
+        std::cerr << "Failed to load image: " << this->filepath.toStdString()
+                  << std::endl;
         return;
     }
     clear_layout(this->metadata_layout);
@@ -507,9 +519,9 @@ void Application::load_image() {
     this->image_label->setPixmap(scaled_pixmap);
     this->image_label->show();
 
-    this->image = Exiv2::ImageFactory::open(filename.toStdString());
-    this->image->readMetadata();
+    this->image = Exiv2::ImageFactory::open(this->filepath.toStdString());
 
+    this->image->readMetadata();
     this->exif_data = this->image->exifData();
 
     if (this->exif_data.empty()) {
@@ -524,11 +536,9 @@ void Application::refresh_metadata() {
 
     for (auto& [key, value] : this->metadata) {
         this->exif_data[key] = value;
-        std::cout << key << ": " << value << "\n";
+        // std::cout << key << ": " << value << "\n";
     }
     this->metadata.clear();
-
-    std::cout << "Written metadata\n";
 
     this->image->setExifData(this->exif_data);
     this->image->writeMetadata();

@@ -45,6 +45,7 @@ class Application : public QMainWindow {
     QWidget* field_layoutw;
     QLabel* image_label;
 
+    QString filepath;
     std::unique_ptr<Exiv2::Image> image;
     Exiv2::ExifData exif_data;
 
