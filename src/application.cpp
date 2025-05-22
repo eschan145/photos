@@ -208,215 +208,227 @@ QList<QPair<QString, QString>> Application::process_metadata(
     for (const auto& pair : exif_data) {
         std::string key = pair.key();
         QString value = qs(pair.toString());
-        if (key == "Exif.Image.ImageDescription") {
-            this->create_widgets(
-                "Description",
+    }
+    if (exifdata.contains("Exif.Image.XPTitle")) {
+        this->create_widgets(
+            "Title",
+            {
                 {
-                    {
-                        "Description",
-                        qs(exifdata["Exif.Image.ImageDescription"])
-                    }
-                },
-                icons["description"],
-                DataType::MULTISTRING,
-                "Exif.Image.ImageDescription"
-            );
-        }
-        if (key == "Exif.Photo.DateTimeOriginal") {
-            this->create_widgets(
-                "Date",
+                    "Title",
+                    qs(Utils::read_bytes(exifdata["Exif.Image.XPTitle"]))
+                }
+            },
+            icons["title"],
+            DataType::MULTISTRING,
+            "Exif.Image.XPTitle"
+        );
+    }
+    if (exifdata.contains("Exif.Image.XPTitle")) {
+        this->create_widgets(
+            "Description",
+            {
                 {
-                    {
-                        "Date",
-                        qs(exifdata["Exif.Photo.DateTimeOriginal"]),
-                        DataType::DATE
-                    }
-                },
-                icons["date"],
-                DataType::DATE
-            );
+                    "Description",
+                    qs(exifdata["Exif.Image.ImageDescription"])
+                }
+            },
+            icons["description"],
+            DataType::MULTISTRING,
+            "Exif.Image.ImageDescription"
+        );
+    }
+    if (exifdata.contains("Exif.Photo.DateTimeOriginal")) {
+        this->create_widgets(
+            "Date",
+            {
+                {
+                    "Date",
+                    qs(exifdata["Exif.Photo.DateTimeOriginal"]),
+                    DataType::DATE
+                }
+            },
+            icons["date"],
+            DataType::DATE
+        );
+    }
+    if (exifdata.contains("Exif.Image.ImageWidth")) {
+        auto rational = [&](const std::string& tag) -> float {
+            return Utils::parse_rational(exifdata[tag]);
+        };
+
+        double x_resolution = rational("Exif.Image.XResolution");
+        double y_resolution = rational("Exif.Image.YResolution");
+        int resolution_unit =
+            std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
+
+        float multiplier;
+        if (resolution_unit == 2) {
+            multiplier = 1;
+        } else if (resolution_unit == 3) {
+            multiplier = 2.54;
+        } else {
+            throw std::invalid_argument("Unknown resolution unit!");
         }
-        if (key == "Exif.Image.ImageWidth") {
-            auto rational = [&](const std::string& tag) -> float {
-                return Utils::parse_rational(exifdata[tag]);
-            };
 
-            double x_resolution = rational("Exif.Image.XResolution");
-            double y_resolution = rational("Exif.Image.YResolution");
-            int resolution_unit =
-                std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
+        x_resolution *= multiplier;
+        y_resolution *= multiplier;
 
-            float multiplier;
-            if (resolution_unit == 2) {
-                multiplier = 1;
-            } else if (resolution_unit == 3) {
-                multiplier = 2.54;
+        float dpi = std::sqrt(x_resolution * y_resolution);
+
+        this->create_widgets(
+            "Dimensions",
+            {
+                {
+                    "Dimensions",
+                    qs(exifdata["Exif.Image.ImageWidth"]) +
+                    " x " +
+                    qs(exifdata["Exif.Image.ImageLength"])
+                },
+                {"DPI", QString::number(dpi)}
+            },
+            icons["dimension"]
+        );
+    }
+    if (exifdata.contains("Exif.Photo.ExposureTime")) {
+        QString focal_length;
+        {
+            std::string raw = exifdata["Exif.Photo.FocalLength"];
+            float result = 0.f;
+            if (raw.find('/') != std::string::npos) {
+                size_t slash = raw.find('/');
+                double num = std::stod(raw.substr(0, slash));
+                double denom = std::stod(raw.substr(slash + 1));
+                result = num / denom;
             } else {
-                throw std::invalid_argument("Unknown resolution unit!");
+                result = std::stod(raw);
             }
-
-            x_resolution *= multiplier;
-            y_resolution *= multiplier;
-
-            float dpi = std::sqrt(x_resolution * y_resolution);
-
-            this->create_widgets(
-                "Dimensions",
-                {
-                    {
-                        "Dimensions",
-                        qs(exifdata["Exif.Image.ImageWidth"]) +
-                        " x " +
-                        qs(exifdata["Exif.Image.ImageLength"])
-                    },
-                    {"DPI", QString::number(dpi)}
-                },
-                icons["dimension"]
-            );
+            focal_length = QString::number(result, 'f', 1) + " mm";
         }
-        if (key == "Exif.Photo.ExposureTime") {
-            QString focal_length;
-            {
-                std::string raw = exifdata["Exif.Photo.FocalLength"];
-                float result = 0.f;
-                if (raw.find('/') != std::string::npos) {
-                    size_t slash = raw.find('/');
-                    double num = std::stod(raw.substr(0, slash));
-                    double denom = std::stod(raw.substr(slash + 1));
-                    result = num / denom;
-                } else {
-                    result = std::stod(raw);
-                }
-                focal_length = QString::number(result, 'f', 1) + " mm";
+        QString aperture;
+        {
+            std::string raw = exifdata["Exif.Photo.FNumber"];
+            float value = 0.f;
+            if (raw.find('/') != std::string::npos) {
+                size_t slash = raw.find('/');
+                double num = std::stod(raw.substr(0, slash));
+                double denom = std::stod(raw.substr(slash + 1));
+                value = num / denom;
+            } else {
+                value = std::stod(raw);
             }
-            QString aperture;
-            {
-                std::string raw = exifdata["Exif.Photo.FNumber"];
-                float value = 0.f;
-                if (raw.find('/') != std::string::npos) {
-                    size_t slash = raw.find('/');
-                    double num = std::stod(raw.substr(0, slash));
-                    double denom = std::stod(raw.substr(slash + 1));
-                    value = num / denom;
-                } else {
-                    value = std::stod(raw);
-                }
-                aperture = "f/" + QString::number(value, 'f', 1);
-            }
-            QString exposure_program;
-            {
-                switch (std::stoi(exifdata["Exif.Photo.ExposureProgram"])) {
-                    case 1:
-                        exposure_program = "Manual";
-                        break;
-                    case 2:
-                        exposure_program = "Normal";
-                        break;
-                    case 3:
-                        exposure_program = "Aperture";
-                        break;
-                    case 4:
-                        exposure_program = "Shutter";
-                        break;
-                    case 5:
-                        exposure_program = "Creative";
-                        break;
-                    case 6:
-                        exposure_program = "Action";
-                        break;
-                    case 7:
-                        exposure_program = "Portrait";
-                        break;
-                    case 8:
-                        exposure_program = "Landscape";
-                        break;
-                    default:
-                        exposure_program = "Unknown";
-                }
-            }
-
-            QString exposure_time =
-                qs(exifdata["Exif.Photo.ExposureTime"]) + " sec";
-            QString iso =
-                "ISO " + qs(exifdata["Exif.Photo.ISOSpeedRatings"]);
-            QString flash = (std::stoi(exifdata["Exif.Photo.Flash"]) & 0x1)
-                                ? "Flash"
-                                : "No flash";
-            QString wb =
-                (std::stoi(exifdata["Exif.Photo.WhiteBalance"]) == 0)
-                    ? "Auto"
-                    : "Manual";
-
-            this->create_widgets(
-                "Camera",
-                {
-                    {"Make", qs(exifdata["Exif.Image.Make"])},
-                    {"Model", qs(exifdata["Exif.Image.Model"])},
-                    {"Focal length", focal_length},
-                    {"F-stop", aperture},
-                    {"Exposure time", exposure_time},
-                    {"ISO speed", iso},
-                    {"Flash", flash},
-                    {"Exposure program", exposure_program},
-                    {"White Balance", wb},
-                    {
-                        "Zoom ratio",
-                        qs(exifdata["Exif.Photo.DigitalZoomRatio"])
-                    }
-                },
-                icons["camera"]
-            );
+            aperture = "f/" + QString::number(value, 'f', 1);
         }
-        if ((key == "Exif.Image.GPSTag")) {
-            if (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
-                  exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
-                  exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
-                  exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
-                  exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
-                  exifdata.contains("Exif.GPSInfo.GPSAltitudeRef"))) {
-                std::cout << "Missing GPS metadata.";
-                continue;
+        QString exposure_program;
+        {
+            switch (std::stoi(exifdata["Exif.Photo.ExposureProgram"])) {
+                case 1:
+                    exposure_program = "Manual";
+                    break;
+                case 2:
+                    exposure_program = "Normal";
+                    break;
+                case 3:
+                    exposure_program = "Aperture";
+                    break;
+                case 4:
+                    exposure_program = "Shutter";
+                    break;
+                case 5:
+                    exposure_program = "Creative";
+                    break;
+                case 6:
+                    exposure_program = "Action";
+                    break;
+                case 7:
+                    exposure_program = "Portrait";
+                    break;
+                case 8:
+                    exposure_program = "Landscape";
+                    break;
+                default:
+                    exposure_program = "Unknown";
             }
-
-            QStringList lat_dms =
-                QString::fromStdString(
-                    exifdata["Exif.GPSInfo.GPSLatitude"]
-                ).split(' ');
-            QStringList lon_dms =
-                QString::fromStdString(
-                    exifdata["Exif.GPSInfo.GPSLongitude"]
-                ).split(' ');
-
-            float latitude = Utils::to_decimal(
-                lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]
-            );
-            float longitude = Utils::to_decimal(
-                lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]
-            );
-
-            int altitude_ref =
-                std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
-
-            float altitude = Utils::parse_fraction(
-                QString::fromStdString(
-                    exifdata["Exif.GPSInfo.GPSAltitude"]
-                )
-            );
-
-            if (altitude_ref == 1) {
-                altitude = -altitude;
-            }
-
-            this->create_widgets(
-                "GPS",
-                {
-                    {"Latitude", QString::number(latitude)},
-                    {"Longitude", QString::number(longitude)},
-                    {"Altitude", QString::number(altitude)}
-                },
-                icons["location"]
-            );
         }
+
+        QString exposure_time =
+            qs(exifdata["Exif.Photo.ExposureTime"]) + " sec";
+        QString iso =
+            "ISO " + qs(exifdata["Exif.Photo.ISOSpeedRatings"]);
+        QString flash = (std::stoi(exifdata["Exif.Photo.Flash"]) & 0x1)
+                            ? "Flash"
+                            : "No flash";
+        QString wb =
+            (std::stoi(exifdata["Exif.Photo.WhiteBalance"]) == 0)
+                ? "Auto"
+                : "Manual";
+
+        this->create_widgets(
+            "Camera",
+            {
+                {"Make", qs(exifdata["Exif.Image.Make"])},
+                {"Model", qs(exifdata["Exif.Image.Model"])},
+                {"Focal length", focal_length},
+                {"F-stop", aperture},
+                {"Exposure time", exposure_time},
+                {"ISO speed", iso},
+                {"Flash", flash},
+                {"Exposure program", exposure_program},
+                {"White Balance", wb},
+                {
+                    "Zoom ratio",
+                    qs(exifdata["Exif.Photo.DigitalZoomRatio"])
+                }
+            },
+            icons["camera"]
+        );
+    }
+    if (exifdata.contains("Exif.Image.GPSTag") &&
+        (!(exifdata.contains("Exif.GPSInfo.GPSLatitude") &&
+                exifdata.contains("Exif.GPSInfo.GPSLatitudeRef") &&
+                exifdata.contains("Exif.GPSInfo.GPSLongitude") &&
+                exifdata.contains("Exif.GPSInfo.GPSLongitudeRef") &&
+                exifdata.contains("Exif.GPSInfo.GPSAltitude") &&
+                exifdata.contains("Exif.GPSInfo.GPSAltitudeRef")))) {
+            // std::cout << "Missing GPS metadata.";
+
+        QStringList lat_dms =
+            QString::fromStdString(
+                exifdata["Exif.GPSInfo.GPSLatitude"]
+            ).split(' ');
+        QStringList lon_dms =
+            QString::fromStdString(
+                exifdata["Exif.GPSInfo.GPSLongitude"]
+            ).split(' ');
+
+        float latitude = Utils::to_decimal(
+            lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]
+        );
+        float longitude = Utils::to_decimal(
+            lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]
+        );
+
+        int altitude_ref =
+            std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
+
+        float altitude = Utils::parse_fraction(
+            QString::fromStdString(
+                exifdata["Exif.GPSInfo.GPSAltitude"]
+            )
+        );
+
+        if (altitude_ref == 1) {
+            altitude = -altitude;
+        }
+
+        this->create_widgets(
+            "GPS",
+            {
+                {"Latitude", QString::number(latitude)},
+                {"Longitude", QString::number(longitude)},
+                {"Altitude", QString::number(altitude)}
+            },
+            icons["location"]
+        );
     }
 
     return metadata;

@@ -77,7 +77,9 @@ std::string read_bytes(std::string input) {
         if (byte_value < 0 || byte_value > 255) {
             return input;
         }
-        result.push_back(static_cast<char>(byte_value));
+        if (byte_value != 0) {
+            result.push_back(byte_value < 32 || byte_value > 126 ? '?' : static_cast<char>(byte_value));
+        }
     }
 
     if (result.empty()) return input;
