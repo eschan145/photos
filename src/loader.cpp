@@ -114,11 +114,11 @@ void write_heic(
     process.start("exiftool", arguments);
     process.waitForFinished(-1);
 
-    QString stdout = process.readAllStandardOutput();
-    QString stderr = process.readAllStandardError();
+    QString std_out = process.readAllStandardOutput();
+    QString std_err = process.readAllStandardError();
 
-    if (!stderr.isEmpty()) {
-        qWarning() << "ExifTool error:" << stderr;
+    if (!std_err.isEmpty()) {
+        qWarning() << "ExifTool error:" << std_err;
     }
 }
 
