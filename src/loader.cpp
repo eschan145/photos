@@ -14,7 +14,7 @@ QPixmap load_heic(const QString& path) {
     if (err.code != heif_error_Ok) {
         heif_context_free(ctx);
         throw std::runtime_error(
-            "heif_context_read_from_file failed: " + err.message + "!"
+            "heif_context_read_from_file failed: " + std::string(err.message) + "!"
         );
     }
 
@@ -23,7 +23,7 @@ QPixmap load_heic(const QString& path) {
     if (err.code != heif_error_Ok) {
         heif_context_free(ctx);
         throw std::runtime_error(
-            "heif_context_get_primary_image_handle failed: " + err.message + "!"
+            "heif_context_get_primary_image_handle failed: " + std::string(err.message) + "!"
         );
     }
 
@@ -39,7 +39,7 @@ QPixmap load_heic(const QString& path) {
         heif_image_handle_release(handle);
         heif_context_free(ctx);
         throw std::runtime_error(
-            "heif_decode_image failed: " + err.message + "!"
+            "heif_decode_image failed: " + std::string(err.message) + "!"
         );
     }
 
