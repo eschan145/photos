@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "loader.h"
 #include "utils.h"
 
 const int DATAPANEL_WIDTH = 370;

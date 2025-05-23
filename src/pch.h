@@ -29,3 +29,4 @@
 #include <sstream>
 #include <cctype>
 #include <sstream>
+#include <libheif/heif.h>

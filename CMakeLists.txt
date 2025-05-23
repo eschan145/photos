@@ -5,9 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 
 cmake_policy(SET CMP0167 OLD)
 
+include(FindPkgConfig)
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets Svg SvgWidgets )
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(exiv2 REQUIRED)
+
+pkg_check_modules(LIBHEIF REQUIRED IMPORTED_TARGET libheif)
 
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
@@ -29,6 +33,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(application ${SOURCES})
 target_precompile_headers(application PRIVATE src/pch.h)
-target_link_libraries(application PRIVATE libboost_filesystem-mt Qt6::Widgets Qt6::Svg Qt6::SvgWidgets exiv2)
+target_link_libraries(application PRIVATE libboost_filesystem-mt Qt6::Widgets Qt6::Svg Qt6::SvgWidgets exiv2 PkgConfig::LIBHEIF)
 
 file(COPY assets DESTINATION build/assets)

@@ -495,7 +495,7 @@ void Application::load_image() {
     this->filepath = QFileDialog::getOpenFileName(
         this, "Open file", "", "Images (*.png; *.xpm; *.jpg; *.heic)");
 
-    QPixmap pixmap(this->filepath);
+    QPixmap pixmap = Image::load_image(this->filepath);
     if (pixmap.isNull()) {
         std::cerr << "Failed to load image: " << this->filepath.toStdString()
                   << std::endl;
