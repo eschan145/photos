@@ -267,7 +267,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
             icons["title"],
             DataType::MULTISTRING,
             "Exif.Image.XPTitle",
-            true
+            this->filepath.endsWith(".heic") ? false : true
         );
         std::cout << exifdata["Exif.Image.XPTitle"] << " to " << Utils::read_bytes(exifdata["Exif.Image.XPTitle"]) << "\n";
     // }
