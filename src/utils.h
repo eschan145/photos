@@ -15,4 +15,11 @@ otherwise.
 */
 std::string read_bytes(std::string input);
 
+
+bool is_base64(const QString& string);
+
+std::string base64(const std::string& input);
+
+std::string from_base64(const std::string& input);
+
 }  // namespace Utils

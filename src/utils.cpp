@@ -87,4 +87,42 @@ std::string read_bytes(std::string input) {
     return result;
 }
 
+bool is_base64(const QString& string) {
+    static QRegularExpression regex("^[A-Za-z0-9+/]*={0,2}$");
+    if (string.length() < 8) return false;
+    if (!regex.match(string).hasMatch()) return false;
+    if (string.length() % 4 != 0) return false;
+
+    QByteArray decoded = QByteArray::fromBase64(string.toUtf8());
+    if (decoded.isEmpty() && !string.isEmpty()) return false;
+
+    QByteArray reencoded = decoded.toBase64();
+    return reencoded == string.toUtf8();
+}
+
+std::string to_base64(const std::string& input) {
+    QString qstr = QString::fromStdString(input);
+    if (is_base64(qstr)) {
+        return input;
+    }
+    return QString::fromUtf8(qstr.toUtf8().toBase64()).toStdString();
+}
+
+std::string from_base64(const std::string& input) {
+    QString qstr = QString::fromStdString(input);
+    if (!is_base64(qstr)) {
+        std::cout << input << " is not base64";
+        return input;
+    }
+
+    std::cout << input << " is base64";
+
+    QByteArray decoded = QByteArray::fromBase64(qstr.toUtf8());
+    if (decoded.isEmpty() && !input.empty()) {
+        throw std::runtime_error("Invalid base64 encoding: decoding failed.");
+    }
+
+    return std::string(decoded.constData(), decoded.size());
+}
+
 }  // namespace Utils
