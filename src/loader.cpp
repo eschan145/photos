@@ -1,6 +1,30 @@
 #include <QDebug>
 #include "loader.h"
 
+
+static QProcess exiftool;
+
+void start_exiftool() {
+    if (exiftool.state() == QProcess::Running) return;
+
+    exiftool.start("exiftool", {"-stay_open", "True", "-@", "-"});
+    exiftool.waitForStarted();
+
+    if (exiftool.state() != QProcess::Running) {
+        throw std::runtime_error("ExifTool did not start!");
+        return;
+    }
+}
+
+void stop_exiftool() {
+    if (exiftool.state() == QProcess::NotRunning) return;
+
+    exiftool.write("-stay_open\nFalse\n");
+    exiftool.waitForBytesWritten();
+    exiftool.closeWriteChannel();
+    exiftool.waitForFinished();
+}
+
 namespace Image {
 
 QPixmap load_heic(const QString& path) {
@@ -94,31 +118,43 @@ void write_heic(
     const std::string& filepath,
     const std::map<std::string, std::string>& metadata
 ) {
-    QProcess process;
-    QStringList arguments;
+    start_exiftool();
 
-    arguments << "-overwrite_original";
+    QByteArray command;
+    command.append("-overwrite_original\n");
 
     for (const auto& [key, value] : metadata) {
         auto pos = key.find_last_of('.');
         std::string tag = (pos != std::string::npos) ? key.substr(pos + 1) : key;
-
-        // Format: -TAG=VALUE
-        QString arg = QString("-%1=%2").arg(QString::fromStdString(tag),
-                                           QString::fromStdString(value));
-        arguments << arg;
+        command.append(
+            '-' + QByteArray::fromStdString(tag) +
+            '=' + QByteArray::fromStdString(value) +
+            '\n'
+        );
     }
 
-    arguments << QString::fromStdString(filepath);
+    command.append(QByteArray::fromStdString(filepath) + '\n');
+    command.append("-execute65536\n");
 
-    process.start("exiftool", arguments);
-    process.waitForFinished(-1);
+    exiftool.write(command);
+    exiftool.waitForBytesWritten();
 
-    QString std_out = process.readAllStandardOutput();
-    QString std_err = process.readAllStandardError();
+    while (!exiftool.canReadLine())
+        exiftool.waitForReadyRead();
+
+    while (true) {
+        QByteArray line = exiftool.readLine();
+        if (line.contains("{ready65536}"))
+            break;
+        // if (!line.trimmed().isEmpty())
+        //     qDebug() << "ExifTool:" << line.trimmed();
+    }
+
+    QString std_out = exiftool.readAllStandardOutput();
+    QString std_err = exiftool.readAllStandardError();
 
     if (!std_err.isEmpty()) {
-        qWarning() << "ExifTool error:" << std_err;
+        throw std::runtime_error("ExifTool error:" + std_err.toStdString());
     }
 }
 

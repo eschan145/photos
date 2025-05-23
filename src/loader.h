@@ -1,5 +1,9 @@
 #include "pch.h"
 
+void start_exiftool();
+
+void stop_exiftool();
+
 namespace Image {
 
 QPixmap load_heic(const QString& path);
