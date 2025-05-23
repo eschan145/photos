@@ -122,16 +122,16 @@ void write_heic(
     }
 }
 
-void write_image(
-    const QString& filepath, const std::map<std::string,
-    std::string>& metadata,
+std::unique_ptr<Exiv2::Image> write_image(
+    const QString& filepath,
+    const std::map<std::string, std::string>& metadata,
     std::unique_ptr<Exiv2::Image> image
 ) {
     if (filepath.endsWith(".heic")) {
         write_heic(filepath.toStdString(), metadata);
     }
     else {
-        Exiv2::ExifData exif_data;
+        Exiv2::ExifData exif_data = image->exifData();
         for (auto& [key, value] : metadata) {
             exif_data[key] = value;
         }
@@ -139,6 +139,7 @@ void write_image(
         image->setExifData(exif_data);
         image->writeMetadata();
     }
+    return image;
 }
 
 }  // namespace Image

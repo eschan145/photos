@@ -11,6 +11,10 @@ void write_heic(
     const std::map<std::string, std::string>& metadata
 );
 
-void write_image(const QString& filepath, const std::map<std::string, std::string>& metadata, std::unique_ptr<Exiv2::Image> image);
+std::unique_ptr<Exiv2::Image> write_image(
+    const QString& filepath,
+    const std::map<std::string, std::string>& metadata,
+    std::unique_ptr<Exiv2::Image> image
+);
 
 }  // namespace Image

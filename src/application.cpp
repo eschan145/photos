@@ -540,11 +540,11 @@ void Application::refresh_metadata() {
         // std::cout << key << ": " << value << "\n";
     }
 
-    Image::write_image(
+    this->image = Image::write_image(
         this->filepath,
         this->metadata,
         std::move(this->image)
     );
 
-    this->metadata.clear();
+    // this->metadata.clear();
 }
