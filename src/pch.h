@@ -23,6 +23,7 @@
 #include <QTextEdit>
 #include <QWidget>
 #include <QTimer>
+#include <QProcess>
 #include <QtSvgWidgets/QSvgWidget>
 #include <iostream>
 #include <map>

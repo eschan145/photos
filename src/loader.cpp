@@ -90,4 +90,55 @@ QPixmap load_image(const QString& path) {
     }
 }
 
+void write_heic(
+    const std::string& filepath,
+    const std::map<std::string, std::string>& metadata
+) {
+    QProcess process;
+    QStringList arguments;
+
+    arguments << "-overwrite_original";
+
+    for (const auto& [key, value] : metadata) {
+        auto pos = key.find_last_of('.');
+        std::string tag = (pos != std::string::npos) ? key.substr(pos + 1) : key;
+
+        // Format: -TAG=VALUE
+        QString arg = QString("-%1=%2").arg(QString::fromStdString(tag),
+                                           QString::fromStdString(value));
+        arguments << arg;
+    }
+
+    arguments << QString::fromStdString(filepath);
+
+    process.start("exiftool", arguments);
+    process.waitForFinished(-1);
+
+    QString stdout = process.readAllStandardOutput();
+    QString stderr = process.readAllStandardError();
+
+    if (!stderr.isEmpty()) {
+        qWarning() << "ExifTool error:" << stderr;
+    }
+}
+
+void write_image(
+    const QString& filepath, const std::map<std::string,
+    std::string>& metadata,
+    std::unique_ptr<Exiv2::Image> image
+) {
+    if (filepath.endsWith(".heic")) {
+        write_heic(filepath.toStdString(), metadata);
+    }
+    else {
+        Exiv2::ExifData exif_data;
+        for (auto& [key, value] : metadata) {
+            exif_data[key] = value;
+        }
+
+        image->setExifData(exif_data);
+        image->writeMetadata();
+    }
+}
+
 }  // namespace Image

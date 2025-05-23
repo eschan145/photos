@@ -255,7 +255,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
         QString value = qs(pair.toString());
     }
 
-    if (exifdata.contains("Exif.Image.XPTitle")) {
+    // if (exifdata.contains("Exif.Image.XPTitle")) {
         this->create_widgets(
             "Title",
             {
@@ -269,8 +269,9 @@ QList<QPair<QString, QString>> Application::process_metadata(
             "Exif.Image.XPTitle",
             true
         );
-    }
-    if (exifdata.contains("Exif.Image.XPTitle")) {
+        std::cout << exifdata["Exif.Image.XPTitle"] << " to " << Utils::read_bytes(exifdata["Exif.Image.XPTitle"]) << "\n";
+    // }
+    // if (exifdata.contains("Exif.Image.XPTitle")) {
         this->create_widgets(
             "Description",
             {
@@ -283,7 +284,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
             DataType::MULTILINE,
             "Exif.Image.ImageDescription"
         );
-    }
+    // }
     if (exifdata.contains("Exif.Photo.DateTimeOriginal")) {
         this->create_widgets(
             "Date",
@@ -538,8 +539,12 @@ void Application::refresh_metadata() {
         this->exif_data[key] = value;
         // std::cout << key << ": " << value << "\n";
     }
-    this->metadata.clear();
 
-    this->image->setExifData(this->exif_data);
-    this->image->writeMetadata();
+    Image::write_image(
+        this->filepath,
+        this->metadata,
+        std::move(this->image)
+    );
+
+    this->metadata.clear();
 }
