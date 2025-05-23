@@ -6,5 +6,9 @@ int main(int argc, char* argv[]) {
     Application application;
     application.show();
 
-    return app.exec();
+    int result = app.exec();
+
+    stop_exiftool();
+    
+    return result;
 }
