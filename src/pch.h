@@ -31,3 +31,4 @@
 #include <cctype>
 #include <sstream>
 #include <libheif/heif.h>
+#include <regex>

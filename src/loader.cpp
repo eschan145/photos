@@ -126,15 +126,24 @@ void write_heic(
     for (const auto& [key, value] : metadata) {
         auto pos = key.find_last_of('.');
         std::string tag = (pos != std::string::npos) ? key.substr(pos + 1) : key;
+
+        std::string escaped_value = std::regex_replace(
+            value,
+            std::regex("\n"),
+            "\\n"
+        );
+
         command.append(
             '-' + QByteArray::fromStdString(tag) +
-            '=' + QByteArray::fromStdString(value) +
+            '=' + QByteArray::fromStdString(escaped_value) +
             '\n'
         );
     }
 
     command.append(QByteArray::fromStdString(filepath) + '\n');
-    command.append("-execute65536\n");
+    command.append("-execute123\n");
+    qDebug().noquote() << "Command:\n" << QString::fromUtf8(command);
+
 
     exiftool.write(command);
     exiftool.waitForBytesWritten();
@@ -144,9 +153,9 @@ void write_heic(
 
     while (true) {
         QByteArray line = exiftool.readLine();
-        if (line.contains("{ready65536}"))
+        if (line.contains("{ready123}"))
             break;
-        // if (!line.trimmed().isEmpty())
+        if (!line.trimmed().isEmpty()) return;
         //     qDebug() << "ExifTool:" << line.trimmed();
     }
 
