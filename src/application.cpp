@@ -204,7 +204,9 @@ void Application::create_widgets(
         text_edit->setFixedWidth(290);
         text_edit->setMaximumHeight(500);
         text_edit->setPlaceholderText(title);
-        text_edit->setText(values[0].value);
+        QString value = values[0].value;
+        value.replace("\\n", "\n");
+        text_edit->setText(value);
         
         right_layout->addWidget(text_edit);
 

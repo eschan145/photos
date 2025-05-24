@@ -144,7 +144,6 @@ void write_heic(
     command.append("-execute123\n");
     qDebug().noquote() << "Command:\n" << QString::fromUtf8(command);
 
-
     exiftool.write(command);
     exiftool.waitForBytesWritten();
 
