@@ -46,11 +46,14 @@ Application::Application() {
 
     QWidget* metadata_layoutw = new QWidget;
     this->metadata_layout = new QVBoxLayout(metadata_layoutw);
+    metadata_layoutw->setMaximumWidth(DATAPANEL_WIDTH);
     metadata_layoutw->setLayout(this->metadata_layout);
 
     QScrollArea* scroll_area = new QScrollArea;
     scroll_area->setWidgetResizable(true);
     scroll_area->setWidget(metadata_layoutw);
+    scroll_area->setMinimumWidth(DATAPANEL_WIDTH);
+    scroll_area->setMaximumWidth(DATAPANEL_WIDTH);
     scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     metadata_layout->setSpacing(0);
     metadata_layout->setContentsMargins(0, 0, 0, 0);
