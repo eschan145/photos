@@ -219,7 +219,8 @@ void Application::create_widgets(
                 text_edit->contentsMargins().bottom();
             text_edit->setFixedHeight(std::max(30, height + margin));
         };
-        auto content_resize = [this, text_edit, key]() {
+        auto content_resize = [this, text_edit, key, resize]() {
+            resize();
             this->metadata[key] = text_edit->toMarkdown().toStdString();
             this->refresh_metadata();
         };
