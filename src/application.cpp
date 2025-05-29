@@ -191,7 +191,7 @@ void Application::create_widgets(
                     else {
                         this->metadata[key] = text.toStdString();
                     }
-                    this->refresh_metadata();
+                    // this->refresh_metadata();
                 }
             );
 
@@ -218,6 +218,8 @@ void Application::create_widgets(
             int margin = text_edit->contentsMargins().top() +
                 text_edit->contentsMargins().bottom();
             text_edit->setFixedHeight(std::max(30, height + margin));
+        };
+        auto content_resize = [this, text_edit, key]() {
             this->metadata[key] = text_edit->toMarkdown().toStdString();
             this->refresh_metadata();
         };
@@ -226,7 +228,7 @@ void Application::create_widgets(
                 text_edit,
                 &QTextEdit::textChanged,
                 this,
-                resize
+                content_resize
             );
         }
 
@@ -261,34 +263,47 @@ QList<QPair<QString, QString>> Application::process_metadata(
     }
 
     // if (exifdata.contains("Exif.Image.XPTitle")) {
+
+    std::string key = "Exif.Image.XPTitle";
+    if (exifdata["Exif.Image.XPTitle"].empty()) {
+        key = "Exif.Image.XPSubject";
+    } else if (exifdata["Exif.Image.XPSubject"].empty()) {
+        key = "Exif.Image.XPTitle";
+    }
         this->create_widgets(
             "Title",
             {
                 {
                     "Title",
-                    qs(Utils::read_bytes(exifdata["Exif.Image.XPTitle"]))
+                    qs(Utils::read_bytes(exifdata[key]))
                 }
             },
             icons["title"],
             DataType::MULTISTRING,
-            "Exif.Image.XPTitle",
+            key,
             this->filepath.endsWith(".heic") ? false : true
         );
         std::cout << exifdata["Exif.Image.XPTitle"] << " to " << Utils::read_bytes(exifdata["Exif.Image.XPTitle"]) << "\n";
     // }
     // if (exifdata.contains("Exif.Image.XPTitle")) {
-        this->create_widgets(
-            "Description",
+    std::string description_key = "Exif.Image.ImageDescription";
+    if (exifdata["Exif.Image.ImageDescription"].empty()) {
+        description_key = "Exif.Image.XPComment";
+    } else if (exifdata["Exif.Image.XPComment"].empty()) {
+        description_key = "Exif.Image.ImageDescription";
+    }
+    this->create_widgets(
+        "Description",
+        {
             {
-                {
-                    "Description",
-                    qs(Utils::read_bytes(exifdata["Exif.Image.ImageDescription"]))
-                }
-            },
-            icons["description"],
-            DataType::MULTILINE,
-            "Exif.Image.ImageDescription"
-        );
+                "Description",
+                qs(Utils::read_bytes(exifdata[description_key]))
+            }
+        },
+        icons["description"],
+        DataType::MULTILINE,
+        description_key
+    );
     // }
     if (exifdata.contains("Exif.Photo.DateTimeOriginal")) {
         this->create_widgets(
