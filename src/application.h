@@ -11,6 +11,8 @@ struct FieldData {
     QString readable_name;
 };
 
+extern QStringList IMAGE_EXTENSIONS;
+
 enum class DataType { STRING, DATE, MULTISTRING, MULTILINE };
 
 struct MetadataField {
@@ -36,6 +38,9 @@ class Application : public QMainWindow {
    public:
     Application();
 
+   protected:
+    bool eventFilter(QObject* object, QEvent* event) override;
+
    private:
     QHBoxLayout* main_layout;
     QVBoxLayout* image_layout;
@@ -52,6 +57,15 @@ class Application : public QMainWindow {
 
     std::map<std::string, std::string> metadata;
 
+    // QFileSystemWatcher* watcher;
+    QStringList files;
+    QString current_folder;
+    int image_index = 0;
+
+    void next();
+    void previous();
+    void reload_files();
+
     void create_widgets(
         const QString& title,
         const QList<MetadataField>& values,
@@ -66,7 +80,8 @@ class Application : public QMainWindow {
         Exiv2::ExifData& exif_data
     );
 
-    void load_image();
+    void open_directory();
+    void show_image(const QString& filepath);
     void refresh_metadata();
 };
 

@@ -1,5 +1,11 @@
 #include "application.h"
 
+QStringList IMAGE_EXTENSIONS = {
+    "png",
+    "jpg",
+    "heic"
+};
+
 QString AssetManager::operator[](const QString& key) {
     return "assets/" + key + ".svg";
 }
@@ -64,8 +70,72 @@ Application::Application() {
         open_button,
         &QPushButton::clicked,
         this,
-        &Application::load_image
+        &Application::open_directory
     );
+
+    QTimer* refresh_timer = new QTimer;
+    connect(refresh_timer, &QTimer::timeout, this, &Application::reload_files);
+    refresh_timer->start(5000);
+
+    qApp->installEventFilter(this);
+}
+
+bool Application::eventFilter(QObject *object, QEvent *event) {
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
+        if (key_event->key() == Qt::Key_Left) {
+            this->previous();
+            return true;
+        } else if (key_event->key() == Qt::Key_Right) {
+            this->next();
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(object, event);
+}
+
+
+void Application::next() {
+    if (this->files.isEmpty()) return;
+    this->image_index = (this->image_index + 1) % this->files.size();
+    this->show_image(this->files[this->image_index]);
+}
+
+void Application::previous() {
+    if (this->files.isEmpty()) return;
+    this->image_index = (this->image_index - 1) % this->files.size();
+    this->show_image(this->files[this->image_index]);
+}
+
+void Application::reload_files() {
+    if (this->current_folder == "") return;
+
+    QStringList new_files;
+    QDirIterator diriterator(
+        this->current_folder,
+        QDir::Files,
+        QDirIterator::Subdirectories
+    );
+
+    while (diriterator.hasNext()) {
+        QString path = diriterator.next();
+        QFileInfo info(path);
+        if (IMAGE_EXTENSIONS.contains(info.suffix().toLower())) {
+            new_files.append(path);
+        }
+    }
+
+    if (new_files != this->files) {
+        this->files = new_files;
+        if (this->files.isEmpty()) {
+            this->image_label->setText("No image files found.");
+            this->image_index = 0;
+        }
+        else {
+            this->image_index = qMin(this->image_index, this->files.size() - 1);
+            this->show_image(this->files[this->image_index]);
+        }
+    }
 }
 
 void Application::create_widgets(
@@ -513,13 +583,20 @@ QList<QPair<QString, QString>> Application::process_metadata(
     return metadata;
 }
 
-void Application::load_image() {
-    this->filepath = QFileDialog::getOpenFileName(
-        this, "Open file", "", "Images (*.png; *.xpm; *.jpg; *.heic)");
+void Application::open_directory() {
+    this->current_folder = QFileDialog::getExistingDirectory(
+        this,
+        "Open folder",
+        "",
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+    );
+    this->reload_files();
+}
 
-    QPixmap pixmap = Image::load_image(this->filepath);
+void Application::show_image(const QString& filepath) {
+    QPixmap pixmap = Image::load_image(filepath);
     if (pixmap.isNull()) {
-        std::cerr << "Failed to load image: " << this->filepath.toStdString()
+        std::cerr << "Failed to load image: " << filepath.toStdString()
                   << std::endl;
         return;
     }
@@ -541,7 +618,7 @@ void Application::load_image() {
     this->image_label->setPixmap(scaled_pixmap);
     this->image_label->show();
 
-    this->image = Exiv2::ImageFactory::open(this->filepath.toStdString());
+    this->image = Exiv2::ImageFactory::open(filepath.toStdString());
 
     this->image->readMetadata();
     this->exif_data = this->image->exifData();
