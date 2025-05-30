@@ -103,8 +103,11 @@ void Application::next() {
 
 void Application::previous() {
     if (this->files.isEmpty()) return;
-    this->image_index = (this->image_index - 1) % this->files.size();
+    this->image_index = (this->image_index + this->files.size() - 1) % this->files.size();
+    // std::cout << this->files[this->image_index].toStdString() << "\n";
+    // assert(this->files[this->image_index]);
     this->show_image(this->files[this->image_index]);
+    
 }
 
 void Application::reload_files() {

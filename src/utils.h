@@ -1,5 +1,42 @@
 #include "pch.h"
 
+#undef assert
+
+#ifdef NDEBUG
+    #define assert(...) ((void)0)
+#else
+    #define _ASSERT_MSG(cond, message) \
+        do { \
+            if (!(cond)) { \
+                std::ostringstream ossmessage; \
+                ossmessage << "Assertion failed: " #cond \
+                        << " (" << (cond) \
+                        << ") at " << __FILE__ << ":" \
+                        << std::to_string(__LINE__) \
+                        << " in function " << __func__ \
+                        << "\n" << message << "\n"; \
+                std::abort(); \
+            } \
+        } while (0)
+
+    #define _ASSERT_NO_MSG(cond) \
+        do { \
+            if (!(cond)) { \
+                std::ostringstream ossmessage; \
+                ossmessage << "Assertion failed: " #cond \
+                        << " (" << (cond) \
+                        << ") at " << __FILE__ << ":" \
+                        << std::to_string(__LINE__) \
+                        << " in function " << __func__; \
+                std::abort(); \
+            } \
+        } while (0)
+
+    #define _GET_MACRO(_1, _2, NAME, ...) NAME
+    #define assert(...) \
+        _GET_MACRO(__VA_ARGS__, _ASSERT_MSG, _ASSERT_NO_MSG)(__VA_ARGS__)
+#endif
+
 namespace Utils {
 
 float parse_fraction(const QString& fraction);
