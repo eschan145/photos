@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QProcess>
+#include <QtWebView/QtWebView>
 #include <QtSvgWidgets/QSvgWidget>
 #include <iostream>
 #include <map>

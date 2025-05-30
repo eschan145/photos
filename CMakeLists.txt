@@ -7,7 +7,7 @@ cmake_policy(SET CMP0167 OLD)
 
 include(FindPkgConfig)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Svg SvgWidgets )
+find_package(Qt6 REQUIRED COMPONENTS Widgets Svg SvgWidgets WebView)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(exiv2 REQUIRED)
 
@@ -35,6 +35,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(application ${SOURCES})
 target_precompile_headers(application PRIVATE src/pch.h)
-target_link_libraries(application PRIVATE libboost_filesystem-mt Qt6::Widgets Qt6::Svg Qt6::SvgWidgets exiv2 PkgConfig::LIBHEIF)
+target_link_libraries(application PRIVATE libboost_filesystem-mt Qt6::Widgets Qt6::Svg Qt6::SvgWidgets Qt6::WebView exiv2 PkgConfig::LIBHEIF)
 
 

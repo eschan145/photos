@@ -557,6 +557,8 @@ void Application::refresh_metadata() {
     if (this->metadata.empty()) return;
 
     for (auto& [key, value] : this->metadata) {
+        // std::cout << key << " was changed to "
+        //           << value << " from " << this->exif_data[key]; 
         this->exif_data[key] = value;
         // std::cout << key << ": " << value << "\n";
     }

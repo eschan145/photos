@@ -5,7 +5,7 @@
 #include "loader.h"
 #include "utils.h"
 
-const int DATAPANEL_WIDTH = 370;
+const int DATAPANEL_WIDTH = 340;
 
 struct FieldData {
     QString readable_name;
