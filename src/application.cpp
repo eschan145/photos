@@ -328,7 +328,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
 
     for (auto it = exif_data.begin(); it != exif_data.end(); ++it) {
         exifdata[it->key()] = it->value().toString();
-        std::cout << it->key() << ": " << it->value().toString() << "\n";
+        // std::cout << it->key() << ": " << it->value().toString() << "\n";
     }
 
     for (const auto& pair : exif_data) {
@@ -357,7 +357,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
             key,
             this->filepath.endsWith(".heic") ? false : true
         );
-        std::cout << exifdata["Exif.Image.XPTitle"] << " to " << Utils::read_bytes(exifdata["Exif.Image.XPTitle"]) << "\n";
+        // std::cout << exifdata["Exif.Image.XPTitle"] << " to " << Utils::read_bytes(exifdata["Exif.Image.XPTitle"]) << "\n";
     // }
     // if (exifdata.contains("Exif.Image.XPTitle")) {
     std::string description_key = "Exif.Image.ImageDescription";
@@ -600,7 +600,7 @@ void Application::show_image(const QString& filepath) {
     QPixmap pixmap = Image::load_image(filepath);
     if (pixmap.isNull()) {
         std::cerr << "Failed to load image: " << filepath.toStdString()
-                  << std::endl;
+                    << std::endl;
         return;
     }
     clear_layout(this->metadata_layout);
@@ -627,7 +627,7 @@ void Application::show_image(const QString& filepath) {
     this->exif_data = this->image->exifData();
 
     if (this->exif_data.empty()) {
-        throw std::runtime_error("Empty exif data!");
+        return;// this->image_label->setText("")
     } else {
         process_metadata(this->exif_data);
     }

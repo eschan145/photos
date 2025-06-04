@@ -2,6 +2,17 @@
 
 namespace Utils {
 
+Benchmark::Benchmark(const std::string& name) {
+    this->name = name;
+    this->start = std::chrono::high_resolution_clock::now();
+}
+
+Benchmark::~Benchmark() {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << name << " took " << ms << "us\n";
+}
+
 float parse_fraction(const QString& fraction) {
     QStringList parts = fraction.split('/');
     if (parts.size() != 2) {

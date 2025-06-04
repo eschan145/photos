@@ -39,6 +39,15 @@
 
 namespace Utils {
 
+class Benchmark {
+    std::string name;
+    std::chrono::high_resolution_clock::time_point start;
+
+   public:
+    Benchmark(const std::string& name);
+    ~Benchmark();
+};
+
 float parse_fraction(const QString& fraction);
 
 float to_decimal(const QStringList& list, const std::string& ref);
@@ -60,3 +69,9 @@ std::string base64(const std::string& input);
 std::string from_base64(const std::string& input);
 
 }  // namespace Utils
+
+#if ENABLE_BENCHMARKS
+    #define BENCHMARK(name) Utils::Benchmark _timer##__LINE__{name}
+#else
+    #define BENCHMARK(name)
+#endif

@@ -30,6 +30,7 @@
 #include <map>
 #include <sstream>
 #include <cctype>
+#include <chrono>
 #include <sstream>
 #include <libheif/heif.h>
 #include <regex>
