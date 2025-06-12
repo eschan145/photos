@@ -7,7 +7,7 @@ QStringList IMAGE_EXTENSIONS = {
 };
 
 QString AssetManager::operator[](const QString& key) {
-    return "assets/" + key + ".svg";
+    return "./assets/" + key + ".svg";
 }
 
 AssetManager icons;
@@ -98,6 +98,7 @@ bool Application::eventFilter(QObject *object, QEvent *event) {
 void Application::next() {
     if (this->files.isEmpty()) return;
     this->image_index = (this->image_index + 1) % this->files.size();
+    this->filepath = files[this->image_index];
     this->show_image(this->files[this->image_index]);
 }
 
@@ -106,8 +107,8 @@ void Application::previous() {
     this->image_index = (this->image_index + this->files.size() - 1) % this->files.size();
     // std::cout << this->files[this->image_index].toStdString() << "\n";
     // assert(this->files[this->image_index]);
-    this->show_image(this->files[this->image_index]);
-    
+    this->filepath = files[this->image_index];
+    this->show_image(this->filepath);
 }
 
 void Application::reload_files() {
@@ -136,7 +137,8 @@ void Application::reload_files() {
         }
         else {
             this->image_index = qMin(this->image_index, this->files.size() - 1);
-            this->show_image(this->files[this->image_index]);
+            this->filepath = this->files[this->image_index];
+            this->show_image(this->filepath);
         }
     }
 }
@@ -571,6 +573,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
             icons["location"]
         );
     }
+    assert(!this->filepath.isEmpty());
     this->create_widgets(
         "Source",
         {
@@ -626,11 +629,11 @@ void Application::show_image(const QString& filepath) {
     this->image->readMetadata();
     this->exif_data = this->image->exifData();
 
-    if (this->exif_data.empty()) {
-        return;// this->image_label->setText("")
-    } else {
-        process_metadata(this->exif_data);
-    }
+    // if (this->exif_data.empty()) {
+        // return;// this->image_label->setText("")
+    // } else {
+    process_metadata(this->exif_data);
+    // }
 }
 
 void Application::refresh_metadata() {

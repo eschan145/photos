@@ -15,6 +15,7 @@
                         << std::to_string(__LINE__) \
                         << " in function " << __func__ \
                         << "\n" << message << "\n"; \
+                std::cout << ossmessage.str(); \
                 std::abort(); \
             } \
         } while (0)
@@ -28,6 +29,7 @@
                         << ") at " << __FILE__ << ":" \
                         << std::to_string(__LINE__) \
                         << " in function " << __func__; \
+                std::cout << ossmessage.str(); \
                 std::abort(); \
             } \
         } while (0)
