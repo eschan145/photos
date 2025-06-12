@@ -8,9 +8,10 @@ set(CMAKE_AUTOMOC ON)
 
 include(FindPkgConfig)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Svg SvgWidgets WebView)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Svg SvgWidgets Network)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(exiv2 REQUIRED)
+include_directories(extern)
 
 file(COPY assets DESTINATION build/assets)
 
@@ -38,6 +39,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(application ${SOURCES})
 target_precompile_headers(application PRIVATE src/pch.h)
+link_directories("${CMAKE_SOURCE_DIR}/dlls")
 target_link_libraries(
     application
     PRIVATE
@@ -45,9 +47,9 @@ target_link_libraries(
     Qt6::Widgets
     Qt6::Svg
     Qt6::SvgWidgets
-    Qt6::WebView
+    Qt6::Network
     exiv2
     PkgConfig::LIBHEIF
-    )
-
-
+    ${CMAKE_SOURCE_DIR}/dlls/libqgeoview.dll.a
+    #libqgeoview.dll
+)

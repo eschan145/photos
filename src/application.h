@@ -13,7 +13,7 @@ struct FieldData {
 
 extern QStringList IMAGE_EXTENSIONS;
 
-enum class DataType { STRING, DATE, MULTISTRING, MULTILINE };
+enum class DataType { STRING, DATE, MULTISTRING, MULTILINE, LOCATION };
 
 struct MetadataField {
     QString name;
@@ -73,7 +73,9 @@ class Application : public QMainWindow {
         DataType type = DataType::STRING,
         std::string key = "",
         bool binary = false,
-        int max_rows = 1
+        int max_rows = 1,
+        double longitude = -1,
+        double latitude = -1
     );
 
     QList<QPair<QString, QString>> process_metadata(

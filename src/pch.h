@@ -11,6 +11,8 @@
 #include <QLineEdit>
 #include <QList>
 #include <QMainWindow>
+#include <QNetworkDiskCache>
+#include <QKeyEvent>
 #include <QMap>
 #include <QPair>
 #include <QPalette>
@@ -24,8 +26,10 @@
 #include <QWidget>
 #include <QTimer>
 #include <QProcess>
-#include <QtWebView/QtWebView>
 #include <QtSvgWidgets/QSvgWidget>
+#include <QGeoView/QGVLayerOSM.h>
+#include <QDir>
+#include <QDirIterator>
 #include <iostream>
 #include <map>
 #include <sstream>

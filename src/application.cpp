@@ -73,6 +73,13 @@ Application::Application() {
         &Application::open_directory
     );
 
+    QDir("cacheDir").removeRecursively();
+    auto cache = new QNetworkDiskCache(this);
+    cache->setCacheDirectory("cacheDir");
+    auto manager = new QNetworkAccessManager(this);
+    manager->setCache(cache);
+    QGV::setNetworkManager(manager);
+
     QTimer* refresh_timer = new QTimer;
     connect(refresh_timer, &QTimer::timeout, this, &Application::reload_files);
     refresh_timer->start(5000);
@@ -150,7 +157,9 @@ void Application::create_widgets(
     DataType type,
     std::string key,
     bool is_binary,
-    int max_rows
+    int max_rows,
+    double longitude,
+    double latitude
 ) {
     QWidget* container = new QWidget;
     QHBoxLayout* container_layout = new QHBoxLayout;
@@ -310,6 +319,17 @@ void Application::create_widgets(
 
         // Resize text edit to fit new content after text is updated by Qt
         QTimer::singleShot(0, this, resize);
+    }
+    else if (type == DataType::LOCATION) {
+        QGVMap* map = new QGVMap(this);
+        auto osm_layer = new QGVLayerOSM();
+        map->addItem(osm_layer);
+        auto target = map->getProjection()->boundaryGeoRect();
+        auto action = QGVCameraActions(map)
+            .moveTo(QGV::GeoPos{47.673988, -122.121513})
+            .scaleBy(0.2);
+        map->cameraTo(action);
+        right_layout->addWidget(map);
     }
 
     right_layout->addWidget(data_layoutw);
@@ -575,6 +595,23 @@ QList<QPair<QString, QString>> Application::process_metadata(
                 {"Altitude", QString::number(altitude)}
             },
             icons["location"]
+        );
+
+        this->create_widgets(
+            "Location",
+            {
+                {
+                    "Location",
+                    qs(Utils::read_bytes(exifdata[description_key]))
+                }
+            },
+            icons["description"],
+            DataType::LOCATION,
+            description_key,
+            false,
+            0,
+            latitude,
+            longitude
         );
     }
     assert(!this->filepath.isEmpty());
