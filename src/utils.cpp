@@ -136,4 +136,17 @@ std::string from_base64(const std::string& input) {
     return std::string(decoded.constData(), decoded.size());
 }
 
+QString format_size(qint64 bytes) {
+    double size = bytes;
+    QStringList units = {"B", "KB", "MB", "GB", "TB"};
+    int index = 0;
+
+    while (size >= 1024.0 && index < units.size() - 1) {
+        size /= 1024.0;
+        ++index;
+    }
+
+    return QString::number(size, 'f', (size < 10.0 ? 1 : 0)) + " " + units[index];
+}
+
 }  // namespace Utils

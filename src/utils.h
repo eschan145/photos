@@ -70,6 +70,8 @@ std::string base64(const std::string& input);
 
 std::string from_base64(const std::string& input);
 
+QString format_size(qint64 bytes);
+
 }  // namespace Utils
 
 #if ENABLE_BENCHMARKS

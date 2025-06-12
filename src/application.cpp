@@ -417,10 +417,13 @@ QList<QPair<QString, QString>> Application::process_metadata(
         x_resolution *= multiplier;
         y_resolution *= multiplier;
 
+        QFileInfo fileinfo(this->filepath);
+        QString size = Utils::format_size(fileinfo.size());
+
         float dpi = std::sqrt(x_resolution * y_resolution);
 
         this->create_widgets(
-            "Dimensions",
+            "Size info",
             {
                 {
                     "Dimensions",
@@ -428,6 +431,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
                     " x " +
                     qs(exifdata["Exif.Image.ImageLength"])
                 },
+                { "File size", size },
                 {"DPI", QString::number(dpi)}
             },
             icons["dimension"]
