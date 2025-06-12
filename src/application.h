@@ -74,8 +74,8 @@ class Application : public QMainWindow {
         std::string key = "",
         bool binary = false,
         int max_rows = 1,
-        double longitude = -1,
-        double latitude = -1
+        double latitude = -1,
+        double longitude = -1
     );
 
     QList<QPair<QString, QString>> process_metadata(

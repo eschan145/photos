@@ -158,8 +158,8 @@ void Application::create_widgets(
     std::string key,
     bool is_binary,
     int max_rows,
-    double longitude,
-    double latitude
+    double latitude,
+    double longitude
 ) {
     QWidget* container = new QWidget;
     QHBoxLayout* container_layout = new QHBoxLayout;
@@ -325,8 +325,9 @@ void Application::create_widgets(
         auto osm_layer = new QGVLayerOSM();
         map->addItem(osm_layer);
         auto target = map->getProjection()->boundaryGeoRect();
+        assert(latitude != -1 && longitude != -1);
         auto action = QGVCameraActions(map)
-            .moveTo(QGV::GeoPos{47.673988, -122.121513})
+            .moveTo(QGV::GeoPos{latitude, longitude})
             .scaleBy(0.2);
         map->cameraTo(action);
         right_layout->addWidget(map);
