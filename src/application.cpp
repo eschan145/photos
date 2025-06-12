@@ -34,7 +34,7 @@ inline QString qs(const std::string& string) {
 }
 
 Application::Application() {
-    this->setFixedSize(700, 500);
+    this->setFixedSize(900, 600);
     central_widget = new QWidget(this);
 
     this->main_layout = new QHBoxLayout(central_widget);
