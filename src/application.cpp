@@ -111,6 +111,7 @@ bool Application::eventFilter(QObject *object, QEvent *event) {
 
 void Application::next() {
     if (this->files.isEmpty()) return;
+    this->refresh_metadata();
     this->image_index = (this->image_index + 1) % this->files.size();
     this->filepath = files[this->image_index];
     this->show_image(this->files[this->image_index]);
@@ -118,6 +119,7 @@ void Application::next() {
 
 void Application::previous() {
     if (this->files.isEmpty()) return;
+    this->refresh_metadata();
     this->image_index = (this->image_index + this->files.size() - 1) % this->files.size();
     // std::cout << this->files[this->image_index].toStdString() << "\n";
     // assert(this->files[this->image_index]);
@@ -282,7 +284,6 @@ void Application::create_widgets(
                     else {
                         this->metadata[key] = text.toStdString();
                     }
-                    // this->refresh_metadata();
                 }
             );
 
@@ -353,6 +354,8 @@ void Application::create_widgets(
 QList<QPair<QString, QString>> Application::process_metadata(
     Exiv2::ExifData& exif_data
 ) {
+    this->edit_filepath = this->filepath;
+
     QList<QPair<QString, QString>> metadata;
     std::map<std::string, std::string> exifdata;
 
@@ -649,6 +652,7 @@ void Application::open_directory() {
 }
 
 void Application::show_image(const QString& filepath) {
+    this->metadata.clear();
     QPixmap pixmap = Image::load_image(filepath);
     if (pixmap.isNull()) {
         std::cerr << "Failed to load image: " << filepath.toStdString()
@@ -688,6 +692,8 @@ void Application::show_image(const QString& filepath) {
 void Application::refresh_metadata() {
     if (this->metadata.empty()) return;
 
+    qDebug() << "Writing metadata to " << this->edit_filepath << "\n";
+
     for (auto& [key, value] : this->metadata) {
         // std::cout << key << " was changed to "
         //           << value << " from " << this->exif_data[key]; 
@@ -696,7 +702,7 @@ void Application::refresh_metadata() {
     }
 
     this->image = Image::write_image(
-        this->filepath,
+        this->edit_filepath,
         this->metadata,
         std::move(this->image)
     );

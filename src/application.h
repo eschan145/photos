@@ -21,6 +21,12 @@ struct MetadataField {
     DataType type = DataType::STRING;
 };
 
+struct EditingContext {
+    QString filepath;
+    Exiv2::ExifData exif_data;
+    std::unique_ptr<Exiv2::Image> image;
+};
+
 class AssetManager {
  public:
     AssetManager() = default;
@@ -52,6 +58,7 @@ class Application : public QMainWindow {
     QLabel* image_label;
 
     QString filepath;
+    QString edit_filepath;
     std::unique_ptr<Exiv2::Image> image;
     Exiv2::ExifData exif_data;
 
