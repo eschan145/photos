@@ -131,18 +131,16 @@ void Application::reload_files() {
     if (this->current_folder == "") return;
 
     QStringList new_files;
+    QStringList filters = {"*.jpg", "*.jpeg", "*.heic", "*.png", "*.bmp", "*.gif"};
     QDirIterator diriterator(
         this->current_folder,
+        filters,
         QDir::Files,
         QDirIterator::Subdirectories
     );
 
     while (diriterator.hasNext()) {
-        QString path = diriterator.next();
-        QFileInfo info(path);
-        if (IMAGE_EXTENSIONS.contains(info.suffix().toLower())) {
-            new_files.append(path);
-        }
+        new_files.append(diriterator.next());
     }
 
     if (new_files != this->files) {
