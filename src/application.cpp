@@ -47,8 +47,74 @@ Application::Application(const char* folder) {
     QPushButton* open_button = new QPushButton("Open image");
     this->image_layout->addWidget(open_button);
 
+    QWidget* image_container = new QWidget;
+
+    QHBoxLayout* layout = new QHBoxLayout(image_container);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    QPushButton* left_button = new QPushButton;
+    QPushButton* right_button = new QPushButton;
+
+    QIcon left_icon(icons["arrow_left"]);
+    QIcon right_icon(icons["arrow_right"]);
+
+    left_button->setIcon(left_icon);
+    right_button->setIcon(right_icon);
+
+    int size = 40;
+    left_button->setFixedSize(size, size);
+    right_button->setFixedSize(size, size);
+    left_button->setIconSize({size, size});
+    right_button->setIconSize({size, size});
+
     image_label = new QLabel;
-    this->image_layout->addWidget(image_label);
+    image_label->setAlignment(Qt::AlignCenter);
+    image_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    layout->addWidget(left_button);
+    layout->addWidget(image_label);
+    layout->addWidget(right_button);
+
+    connect(
+        left_button,
+        &QPushButton::pressed,
+        this,
+        [left_button, size] {
+            left_button->setIconSize({size - 3, size - 3});
+        }
+    );
+    connect(
+        left_button,
+        &QPushButton::released,
+        this,
+        [this, left_button, size] {
+            left_button->setIconSize({size, size});
+            this->previous();
+        }
+    );
+    connect(
+        right_button,
+        &QPushButton::pressed,
+        this,
+        [right_button, size] {
+            right_button->setIconSize({size - 3, size - 3});
+        }
+    );
+    connect(
+        right_button,
+        &QPushButton::released,
+        this,
+        [this, right_button, size] {
+            right_button->setIconSize({size, size});
+            this->next();
+        }
+    );
+    // connect(right_button, &QPushButton::pressed, this, {
+
+    // });
+
+    this->image_layout->addWidget(image_container);
 
     QWidget* metadata_layoutw = new QWidget;
     this->metadata_layout = new QVBoxLayout(metadata_layoutw);

@@ -28,6 +28,7 @@
 #include <QProcess>
 #include <QtSvgWidgets/QSvgWidget>
 #include <QGeoView/QGVLayerOSM.h>
+#include <QStackedLayout>
 #include <QDir>
 #include <QDirIterator>
 #include <iostream>
