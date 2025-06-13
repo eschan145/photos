@@ -33,7 +33,7 @@ inline QString qs(const std::string& string) {
     return QString::fromStdString(string);
 }
 
-Application::Application() {
+Application::Application(const char* folder) {
     this->setFixedSize(900, 600);
     central_widget = new QWidget(this);
 
@@ -79,6 +79,13 @@ Application::Application() {
     auto manager = new QNetworkAccessManager(this);
     manager->setCache(cache);
     QGV::setNetworkManager(manager);
+
+    // Ensure the cache dir is created and initialized before!
+    std::cout << "Opening folder " << folder << "\n";
+    if (folder) {
+        this->current_folder = QString::fromUtf8(folder ? folder : "");
+        this->reload_files();
+    }
 
     QTimer* refresh_timer = new QTimer;
     connect(refresh_timer, &QTimer::timeout, this, &Application::reload_files);

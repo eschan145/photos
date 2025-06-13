@@ -36,7 +36,7 @@ inline QString qs(const std::string& string);
 
 class Application : public QMainWindow {
    public:
-    Application();
+    Application(const char* folder = nullptr);
 
    protected:
     bool eventFilter(QObject* object, QEvent* event) override;
