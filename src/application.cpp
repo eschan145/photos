@@ -198,7 +198,7 @@ void Application::resize_buttons() {
     if (!this->is_initialized) return;
 
     const int offset = 10;
-    int y_center = this->image_scroll_area->y() + (this->image_scroll_area->height() / 2) - (ARROW_SIZE / 2);
+    int y_center = this->image_scroll_area->y() + (this->image_scroll_area->height() / 2) - ARROW_SIZE * 1.5;
 
     this->left_button->move(
         this->image_label->x() + offset,
