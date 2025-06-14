@@ -188,7 +188,6 @@ void Application::resizeEvent(QResizeEvent* event) {
         );
 
         this->image_label->setPixmap(scaled_pixmap);
-        this->image_label->resize(scaled_pixmap.size());
     }
 
     this->resize_buttons();
