@@ -48,7 +48,13 @@ Application::Application(const char* folder) {
     this->image_layout->addWidget(open_button);
 
     this->image_label = new QLabel;
-    this->image_layout->addWidget(this->image_label);
+    this->image_label->setAlignment(Qt::AlignCenter);
+
+    this->image_scroll_area = new QScrollArea;
+    image_scroll_area->setWidget(this->image_label);
+    image_scroll_area->setWidgetResizable(true);
+
+    this->image_layout->addWidget(image_scroll_area);
 
     this->left_button = new QPushButton;
     this->left_button->setIcon(QIcon(icons["arrow_left"]));
@@ -61,8 +67,6 @@ Application::Application(const char* folder) {
     this->right_button->setFixedSize(ARROW_SIZE, ARROW_SIZE);
     this->right_button->setIconSize({ARROW_SIZE, ARROW_SIZE});
     this->right_button->setParent(this->image_label);
-
-    this->resize_buttons();
 
     connect(
         this->left_button,
@@ -152,6 +156,11 @@ Application::Application(const char* folder) {
     qApp->installEventFilter(this);
 
     this->is_initialized = true;
+
+    // Let layout initialize first
+    QTimer::singleShot(0, [this]() {
+        this->resize_buttons();
+    });
 }
 
 bool Application::eventFilter(QObject *object, QEvent *event) {
@@ -171,6 +180,17 @@ bool Application::eventFilter(QObject *object, QEvent *event) {
 void Application::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
 
+    if (!this->pixmap.isNull()) {
+        this->pixmap = this->pixmap.scaled(
+            this->image_scroll_area->viewport()->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+        );
+
+        this->image_label->setPixmap(this->pixmap);
+        this->image_label->resize(this->pixmap.size());
+    }
+
     this->resize_buttons();
 }
 
@@ -178,19 +198,16 @@ void Application::resize_buttons() {
     if (!this->is_initialized) return;
 
     const int offset = 10;
-    int x_left = this->image_label->x() + 10;
-    int x_right = this->image_label->x() + this->image_label->width() - ARROW_SIZE - 10;
-    int y_center = this->image_label->y() + (this->image_label->height() - ARROW_SIZE) / 2;
+    int y_center = this->image_scroll_area->y() + (this->image_scroll_area->height() / 2) - (ARROW_SIZE / 2);
 
     this->left_button->move(
         this->image_label->x() + offset,
         y_center
     );
     this->right_button->move(
-        this->image_label->x() + this->image_label->width() - ARROW_SIZE - offset,
+        this->image_label->x() + this->image_scroll_area->viewport()->width() - ARROW_SIZE - offset,
         y_center
     );
-    // this->right_button->move(x_right, y_center);
 }
 
 void Application::next() {
@@ -735,8 +752,8 @@ void Application::open_directory() {
 
 void Application::show_image(const QString& filepath) {
     this->metadata.clear();
-    QPixmap pixmap = Image::load_image(filepath);
-    if (pixmap.isNull()) {
+    this->pixmap = Image::load_image(filepath);
+    if (this->pixmap.isNull()) {
         std::cerr << "Failed to load image: " << filepath.toStdString()
                     << std::endl;
         return;
@@ -750,14 +767,17 @@ void Application::show_image(const QString& filepath) {
     this->field_layout = new QVBoxLayout(this->field_layoutw);
     this->field_layoutw->setLayout(this->field_layout);
 
-    QSize max_size(this->width() - DATAPANEL_WIDTH, this->height());
+    QSize max_size(
+        this->image_scroll_area->viewport()->width(),
+        this->image_scroll_area->viewport()->height()
+    );
+    
     QPixmap scaled_pixmap = pixmap.scaled(
         max_size,
         Qt::KeepAspectRatio,
         Qt::SmoothTransformation
     );
     this->image_label->setPixmap(scaled_pixmap);
-    this->image_label->show();
 
     this->image = Exiv2::ImageFactory::open(filepath.toStdString());
 

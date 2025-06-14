@@ -2,41 +2,34 @@
 
 #undef assert
 
-#ifdef NDEBUG
-    #define assert(...) ((void)0)
-#else
-    #define _ASSERT_MSG(cond, message) \
-        do { \
-            if (!(cond)) { \
-                std::ostringstream ossmessage; \
-                ossmessage << "Assertion failed: " #cond \
-                        << " (" << (cond) \
-                        << ") at " << __FILE__ << ":" \
-                        << std::to_string(__LINE__) \
-                        << " in function " << __func__ \
-                        << "\n" << message << "\n"; \
-                std::cout << ossmessage.str(); \
-                std::abort(); \
-            } \
-        } while (0)
-
-    #define _ASSERT_NO_MSG(cond) \
-        do { \
-            if (!(cond)) { \
-                std::ostringstream ossmessage; \
-                ossmessage << "Assertion failed: " #cond \
-                        << " (" << (cond) \
-                        << ") at " << __FILE__ << ":" \
-                        << std::to_string(__LINE__) \
-                        << " in function " << __func__; \
-                std::cout << ossmessage.str(); \
-                std::abort(); \
-            } \
-        } while (0)
-
-    #define _GET_MACRO(_1, _2, NAME, ...) NAME
+#ifndef NDEBUG
+    inline void _assert(
+        bool condition,
+        const char* condition_str,
+        const char* file,
+        int line,
+        const char* func,
+        const std::string& message = ""
+    ) {
+        if (!condition) {
+            std::cerr << "\nASSERTION FAILED: \n"
+                      << "    Expression: " << condition_str << "\n"
+                      << "    Location: " << file << ":" << line
+                      << " in function " << func << "\n";
+            if (!message.empty())
+                std::cerr << "Reason: " << message << "\n";
+            std::abort();
+        }
+    }
     #define assert(...) \
-        _GET_MACRO(__VA_ARGS__, _ASSERT_MSG, _ASSERT_NO_MSG)(__VA_ARGS__)
+        assert_selector(__VA_ARGS__, assert_with_msg, assert_no_msg)(__VA_ARGS__)
+    #define assert_selector(_1, _2, NAME, ...) NAME
+    #define assert_no_msg(condition) \
+        _assert((condition), #condition, __FILE__, __LINE__, __func__)
+    #define assert_with_msg(condition, reason) \
+        _assert((condition), #condition, __FILE__, __LINE__, __func__, (reason))
+#else
+    #define assert(...) ((void)0)
 #endif
 
 namespace Utils {

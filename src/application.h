@@ -49,6 +49,7 @@ class Application : public QMainWindow {
     bool eventFilter(QObject* object, QEvent* event) override;
 
     void resizeEvent(QResizeEvent* event) override;
+
     void resize_buttons();
 
    private:
@@ -61,12 +62,14 @@ class Application : public QMainWindow {
     QVBoxLayout* field_layout;
     QWidget* field_layoutw;
     QLabel* image_label;
+    QScrollArea* image_scroll_area;
 
     QPushButton* left_button;
     QPushButton* right_button;
 
     QString filepath;
     QString edit_filepath;
+    QPixmap pixmap;
     std::unique_ptr<Exiv2::Image> image;
     Exiv2::ExifData exif_data;
 
