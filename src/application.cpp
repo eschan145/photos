@@ -181,14 +181,14 @@ void Application::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
 
     if (!this->pixmap.isNull()) {
-        this->pixmap = this->pixmap.scaled(
+        QPixmap scaled_pixmap = this->pixmap.scaled(
             this->image_scroll_area->viewport()->size(),
             Qt::KeepAspectRatio,
             Qt::SmoothTransformation
         );
 
-        this->image_label->setPixmap(this->pixmap);
-        this->image_label->resize(this->pixmap.size());
+        this->image_label->setPixmap(scaled_pixmap);
+        this->image_label->resize(scaled_pixmap.size());
     }
 
     this->resize_buttons();
