@@ -6,6 +6,7 @@
 #include "utils.h"
 
 const int DATAPANEL_WIDTH = 340;
+const int ARROW_SIZE = 40;
 
 struct FieldData {
     QString readable_name;
@@ -47,7 +48,11 @@ class Application : public QMainWindow {
    protected:
     bool eventFilter(QObject* object, QEvent* event) override;
 
+    void resizeEvent(QResizeEvent* event) override;
+    void resize_buttons();
+
    private:
+    bool is_initialized = false;
     QHBoxLayout* main_layout;
     QVBoxLayout* image_layout;
     QVBoxLayout* metadata_layout;
@@ -56,6 +61,9 @@ class Application : public QMainWindow {
     QVBoxLayout* field_layout;
     QWidget* field_layoutw;
     QLabel* image_label;
+
+    QPushButton* left_button;
+    QPushButton* right_button;
 
     QString filepath;
     QString edit_filepath;
