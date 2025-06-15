@@ -62,11 +62,25 @@ Application::Application(const char* folder) {
     this->left_button->setIconSize({ARROW_SIZE, ARROW_SIZE});
     this->left_button->setParent(this->image_label);
 
+    auto* left_effect = new QGraphicsOpacityEffect(this->left_button);
+    this->left_button->setGraphicsEffect(left_effect);
+    left_effect->setOpacity(0.0);
+
+    this->left_opacity_anim = new QPropertyAnimation(left_effect, "opacity", this);
+    this->left_opacity_anim->setDuration(100);
+
     this->right_button = new QPushButton;
     this->right_button->setIcon(QIcon(icons["arrow_right"]));
     this->right_button->setFixedSize(ARROW_SIZE, ARROW_SIZE);
     this->right_button->setIconSize({ARROW_SIZE, ARROW_SIZE});
     this->right_button->setParent(this->image_label);
+
+    auto* right_effect = new QGraphicsOpacityEffect(this->right_button);
+    this->right_button->setGraphicsEffect(right_effect);
+    right_effect->setOpacity(0.0);
+
+    this->right_opacity_anim = new QPropertyAnimation(right_effect, "opacity", this);
+    this->right_opacity_anim->setDuration(100);
 
     connect(
         this->left_button,
@@ -106,6 +120,7 @@ Application::Application(const char* folder) {
             this->next();
         }
     );
+
     // connect(right_button, &QPushButton::pressed, this, {
 
     // });
@@ -125,6 +140,12 @@ Application::Application(const char* folder) {
     scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     metadata_layout->setSpacing(0);
     metadata_layout->setContentsMargins(0, 0, 0, 0);
+
+    this->setMouseTracking(true);
+    this->centralWidget()->setMouseTracking(true);
+    this->image_label->setMouseTracking(true);
+    this->image_scroll_area->setMouseTracking(true);
+    scroll_area->setMouseTracking(true);
 
     this->main_layout->addWidget(scroll_area);
 
@@ -192,6 +213,38 @@ void Application::resizeEvent(QResizeEvent* event) {
 
     this->resize_buttons();
 }
+
+void Application::mouseMoveEvent(QMouseEvent* event) {
+    const int fade_start = 45;
+    const int fade_end = 35;
+
+    QPoint global_mouse = event->globalPosition().toPoint();
+    QPoint left_button_pos = this->left_button->mapToGlobal(QPoint(0, 0));
+    QPoint right_button_pos = this->right_button->mapToGlobal(QPoint(0, 0));
+
+    int mouse_x = global_mouse.x();
+    int left_x = left_button_pos.x() + this->left_button->width() / 2;
+    int right_x = right_button_pos.x() + this->right_button->width() / 2;
+
+    auto fade_calc = [&](int button_x) -> qreal {
+        int dist = std::abs(mouse_x - button_x);
+        if (dist > fade_start) return 0.0;
+        if (dist < fade_end) return 1.0;
+        return 1.0 - (dist - fade_end) / double(fade_start - fade_end);
+    };
+
+    qreal left_opacity = fade_calc(left_x);
+    qreal right_opacity = fade_calc(right_x);
+
+    this->left_opacity_anim->stop();
+    this->left_opacity_anim->setEndValue(left_opacity);
+    this->left_opacity_anim->start();
+
+    this->right_opacity_anim->stop();
+    this->right_opacity_anim->setEndValue(right_opacity);
+    this->right_opacity_anim->start();
+}
+
 
 void Application::resize_buttons() {
     if (!this->is_initialized) return;

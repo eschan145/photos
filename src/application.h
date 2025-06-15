@@ -50,6 +50,8 @@ class Application : public QMainWindow {
 
     void resizeEvent(QResizeEvent* event) override;
 
+    void mouseMoveEvent(QMouseEvent* event) override;
+
     void resize_buttons();
 
    private:
@@ -66,6 +68,8 @@ class Application : public QMainWindow {
 
     QPushButton* left_button;
     QPushButton* right_button;
+    QPropertyAnimation* left_opacity_anim;
+    QPropertyAnimation* right_opacity_anim;
 
     QString filepath;
     QString edit_filepath;

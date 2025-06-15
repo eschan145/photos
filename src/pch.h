@@ -31,6 +31,8 @@
 #include <QStackedLayout>
 #include <QDir>
 #include <QDirIterator>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
 #include <iostream>
 #include <map>
 #include <sstream>
