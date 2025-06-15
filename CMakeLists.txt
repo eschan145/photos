@@ -32,6 +32,19 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_options("-g")
 add_compile_options("-O0")
+add_compile_options(
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wsign-conversion
+    -Wnon-virtual-dtor
+    -Wold-style-cast
+    -Wcast-align
+    -Wunused
+    -Woverloaded-virtual
+    -Wformat=2
+)
 
 add_compile_definitions(ENABLE_BENCHMARKS=1)
 
