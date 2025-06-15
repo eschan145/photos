@@ -247,7 +247,6 @@ void Application::mouseMoveEvent(QMouseEvent* event) {
     this->right_opacity_anim->start();
 }
 
-
 void Application::resize_buttons() {
     if (!this->is_initialized) return;
 
@@ -579,48 +578,31 @@ QList<QPair<QString, QString>> Application::process_metadata(
             DataType::DATE
         );
     }
-    if (exifdata.contains("Exif.Image.ImageWidth")) {
-        auto rational = [&](const std::string& tag) -> float {
-            return Utils::parse_rational(exifdata[tag]);
-        };
 
-        double x_resolution = rational("Exif.Image.XResolution");
-        double y_resolution = rational("Exif.Image.YResolution");
-        int resolution_unit =
-            std::stoi(exifdata["Exif.Image.ResolutionUnit"]);
+    QImage image = pixmap.toImage();
 
-        float multiplier;
-        if (resolution_unit == 2) {
-            multiplier = 1;
-        } else if (resolution_unit == 3) {
-            multiplier = 2.54;
-        } else {
-            throw std::invalid_argument("Unknown resolution unit!");
-        }
+    double x_resolution = image.dotsPerMeterX() / INCH_TO_METER;
+    double y_resolution = image.dotsPerMeterY() / INCH_TO_METER;
 
-        x_resolution *= multiplier;
-        y_resolution *= multiplier;
+    QFileInfo fileinfo(this->filepath);
 
-        QFileInfo fileinfo(this->filepath);
-        QString size = Utils::format_size(fileinfo.size());
+    int dpi = std::sqrt(x_resolution * y_resolution);
 
-        float dpi = std::sqrt(x_resolution * y_resolution);
-
-        this->create_widgets(
-            "Size info",
+    this->create_widgets(
+        "Size info",
+        {
             {
-                {
-                    "Dimensions",
-                    qs(exifdata["Exif.Image.ImageWidth"]) +
-                    " x " +
-                    qs(exifdata["Exif.Image.ImageLength"])
-                },
-                { "File size", size },
-                {"DPI", QString::number(dpi)}
+                "Dimensions",
+                QString::number(image.width()) +
+                " x " +
+                QString::number(image.height())
             },
-            icons["dimension"]
-        );
-    }
+            { "File size", Utils::format_size(fileinfo.size()) },
+            { "DPI", QString::number(dpi) }
+        },
+        icons["dimension"]
+    );
+
     if (exifdata.contains("Exif.Photo.ExposureTime")) {
         QString focal_length;
         {

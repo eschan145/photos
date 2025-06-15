@@ -7,6 +7,7 @@
 
 const int DATAPANEL_WIDTH = 340;
 const int ARROW_SIZE = 40;
+const double INCH_TO_METER = 39.3701;
 
 struct FieldData {
     QString readable_name;
