@@ -61,6 +61,7 @@ Application::Application(const char* folder) {
     this->left_button->setFixedSize(ARROW_SIZE, ARROW_SIZE);
     this->left_button->setIconSize({ARROW_SIZE, ARROW_SIZE});
     this->left_button->setParent(this->image_label);
+    this->left_button->setToolTip("Previous");
 
     auto* left_effect = new QGraphicsOpacityEffect(this->left_button);
     this->left_button->setGraphicsEffect(left_effect);
@@ -74,6 +75,7 @@ Application::Application(const char* folder) {
     this->right_button->setFixedSize(ARROW_SIZE, ARROW_SIZE);
     this->right_button->setIconSize({ARROW_SIZE, ARROW_SIZE});
     this->right_button->setParent(this->image_label);
+    this->right_button->setToolTip("Next");
 
     auto* right_effect = new QGraphicsOpacityEffect(this->right_button);
     this->right_button->setGraphicsEffect(right_effect);
