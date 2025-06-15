@@ -251,7 +251,9 @@ void Application::resize_buttons() {
     if (!this->is_initialized) return;
 
     const int offset = 10;
-    int y_center = this->image_scroll_area->y() + (this->image_scroll_area->height() / 2) - ARROW_SIZE * 1.5;
+    int y_center = static_cast<int>(
+        this->image_scroll_area->y() + (this->image_scroll_area->height() / 2) - ARROW_SIZE * 1.5
+    );
 
     this->left_button->move(
         this->image_label->x() + offset,
@@ -274,7 +276,8 @@ void Application::next() {
 void Application::previous() {
     if (this->files.isEmpty()) return;
     this->refresh_metadata();
-    this->image_index = (this->image_index + this->files.size() - 1) % this->files.size();
+    int file_size = static_cast<int>(this->files.size());
+    this->image_index = (this->image_index + file_size - 1) % file_size;
     // std::cout << this->files[this->image_index].toStdString() << "\n";
     // assert(this->files[this->image_index]);
     this->filepath = files[this->image_index];
@@ -304,7 +307,10 @@ void Application::reload_files() {
             this->image_index = 0;
         }
         else {
-            this->image_index = qMin(this->image_index, this->files.size() - 1);
+            this->image_index = qMin(
+                this->image_index,
+                static_cast<int>(this->files.size()) - 1
+            );
             this->filepath = this->files[this->image_index];
             this->show_image(this->filepath);
         }
@@ -318,7 +324,6 @@ void Application::create_widgets(
     DataType type,
     std::string key,
     bool is_binary,
-    int max_rows,
     double latitude,
     double longitude
 ) {
@@ -354,7 +359,7 @@ void Application::create_widgets(
         data_layout->setContentsMargins(0, 0, 0, 0);
         data_layoutw->setLayout(data_layout);
 
-        int total = values.size();
+        int total = static_cast<int>(values.size());
         int columns = 5;
         int rows = (total + columns - 1) / columns;
 
@@ -402,7 +407,7 @@ void Application::create_widgets(
         dt_edit->setFixedWidth(290);
         dt_edit->setDisplayFormat("MMMM d, h:mm:ss AP");
         dt_edit->setCalendarPopup(true);
-        dt_edit->setDateTime( 
+        dt_edit->setDateTime(
             QDateTime::fromString(values[0].value, "yyyy:MM:dd HH:mm:ss"));
         data_layout->addWidget(dt_edit, 0, Qt::AlignLeft);
         data_layout->addStretch();
@@ -454,10 +459,10 @@ void Application::create_widgets(
         QString value = values[0].value;
         value.replace("\\n", "\n");
         text_edit->setText(value);
-        
+
         right_layout->addWidget(text_edit);
 
-        auto resize = [this, text_edit, key]() {
+        auto resize = [text_edit, key]() {
             int height = static_cast<int>(text_edit->document()->size().height());
             int margin = text_edit->contentsMargins().top() +
                 text_edit->contentsMargins().bottom();
@@ -484,7 +489,6 @@ void Application::create_widgets(
         QGVMap* map = new QGVMap(this);
         auto osm_layer = new QGVLayerOSM();
         map->addItem(osm_layer);
-        auto target = map->getProjection()->boundaryGeoRect();
         assert(latitude != -1 && longitude != -1);
         auto action = QGVCameraActions(map)
             .moveTo(QGV::GeoPos{latitude, longitude})
@@ -506,6 +510,8 @@ void Application::create_widgets(
 QList<QPair<QString, QString>> Application::process_metadata(
     Exiv2::ExifData& exif_data
 ) {
+    assert(!this->pixmap.isNull());
+
     this->edit_filepath = this->filepath;
 
     QList<QPair<QString, QString>> metadata;
@@ -586,7 +592,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
 
     QFileInfo fileinfo(this->filepath);
 
-    int dpi = std::sqrt(x_resolution * y_resolution);
+    int dpi = static_cast<int>(std::sqrt(x_resolution * y_resolution));
 
     this->create_widgets(
         "Size info",
@@ -598,7 +604,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
                 QString::number(image.height())
             },
             { "File size", Utils::format_size(fileinfo.size()) },
-            { "DPI", QString::number(dpi) }
+            { "DPI", QString::number(dpi) + " dpi" }
         },
         icons["dimension"]
     );
@@ -607,7 +613,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
         QString focal_length;
         {
             std::string raw = exifdata["Exif.Photo.FocalLength"];
-            float result = 0.f;
+            double result = 0.0;
             if (raw.find('/') != std::string::npos) {
                 size_t slash = raw.find('/');
                 double num = std::stod(raw.substr(0, slash));
@@ -621,7 +627,7 @@ QList<QPair<QString, QString>> Application::process_metadata(
         QString aperture;
         {
             std::string raw = exifdata["Exif.Photo.FNumber"];
-            float value = 0.f;
+            double value = 0.0;
             if (raw.find('/') != std::string::npos) {
                 size_t slash = raw.find('/');
                 double num = std::stod(raw.substr(0, slash));
@@ -713,17 +719,17 @@ QList<QPair<QString, QString>> Application::process_metadata(
                 exifdata["Exif.GPSInfo.GPSLongitude"]
             ).split(' ');
 
-        float latitude = Utils::to_decimal(
+        double latitude = Utils::to_decimal(
             lat_dms, exifdata["Exif.GPSInfo.GPSLatitudeRef"]
         );
-        float longitude = Utils::to_decimal(
+        double longitude = Utils::to_decimal(
             lon_dms, exifdata["Exif.GPSInfo.GPSLongitudeRef"]
         );
 
         int altitude_ref =
             std::stoi(exifdata["Exif.GPSInfo.GPSAltitudeRef"]);
 
-        float altitude = Utils::parse_fraction(
+        double altitude = Utils::parse_fraction(
             QString::fromStdString(
                 exifdata["Exif.GPSInfo.GPSAltitude"]
             )
@@ -755,7 +761,6 @@ QList<QPair<QString, QString>> Application::process_metadata(
             DataType::LOCATION,
             description_key,
             false,
-            0,
             latitude,
             longitude
         );
@@ -807,7 +812,7 @@ void Application::show_image(const QString& filepath) {
         this->image_scroll_area->viewport()->width(),
         this->image_scroll_area->viewport()->height()
     );
-    
+
     QPixmap scaled_pixmap = pixmap.scaled(
         max_size,
         Qt::KeepAspectRatio,
@@ -834,7 +839,7 @@ void Application::refresh_metadata() {
 
     for (auto& [key, value] : this->metadata) {
         // std::cout << key << " was changed to "
-        //           << value << " from " << this->exif_data[key]; 
+        //           << value << " from " << this->exif_data[key];
         this->exif_data[key] = value;
         // std::cout << key << ": " << value << "\n";
     }

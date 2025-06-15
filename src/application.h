@@ -61,7 +61,6 @@ class Application : public QMainWindow {
     QVBoxLayout* image_layout;
     QVBoxLayout* metadata_layout;
     QWidget* central_widget;
-    QWidget* layoutw;
     QVBoxLayout* field_layout;
     QWidget* field_layoutw;
     QLabel* image_label;
@@ -96,7 +95,6 @@ class Application : public QMainWindow {
         DataType type = DataType::STRING,
         std::string key = "",
         bool binary = false,
-        int max_rows = 1,
         double latitude = -1,
         double longitude = -1
     );

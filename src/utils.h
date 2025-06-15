@@ -45,9 +45,9 @@ class Benchmark {
 
 float parse_fraction(const QString& fraction);
 
-float to_decimal(const QStringList& list, const std::string& ref);
+double to_decimal(const QStringList& list, const std::string& ref);
 
-float parse_rational(const std::string& string);
+double parse_rational(const std::string& string);
 
 /*
 Read the contents of a string. This function simply returns the string if is in

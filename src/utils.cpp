@@ -35,27 +35,27 @@ float parse_fraction(const QString& fraction) {
     return numerator / denominator;
 }
 
-float parse_rational(const std::string& string) {
+double parse_rational(const std::string& string) {
     size_t slash = string.find('/');
     if (slash != std::string::npos) {
         int numerator = std::stoi(string.substr(0, slash));
         int denominator = std::stoi(string.substr(slash + 1));
         if (denominator != 0)
-            return static_cast<float>(numerator) / denominator;
+            return static_cast<double>(numerator) / denominator;
     }
     return 0.f;
 }
 
-float to_decimal(const QStringList& list, const std::string& ref) {
+double to_decimal(const QStringList& list, const std::string& ref) {
     if (list.size() != 3) {
         throw std::invalid_argument("DMS called without three elements!");
     }
 
-    float degrees = parse_fraction(list[0]);
-    float minutes = parse_fraction(list[1]);
-    float seconds = parse_fraction(list[2]);
+    double degrees = parse_fraction(list[0]);
+    double minutes = parse_fraction(list[1]);
+    double seconds = parse_fraction(list[2]);
 
-    float decimal = degrees + minutes / 60.0 + seconds / 3600.0;
+    double decimal = degrees + minutes / 60.0 + seconds / 3600.0;
 
     if (ref == "S" || ref == "W") {
         decimal = -decimal;
@@ -133,7 +133,7 @@ std::string from_base64(const std::string& input) {
         throw std::runtime_error("Invalid base64 encoding: decoding failed.");
     }
 
-    return std::string(decoded.constData(), decoded.size());
+    return std::string(decoded.constData(), static_cast<std::string::size_type>(decoded.size()));
 }
 
 QString format_size(qint64 bytes) {
