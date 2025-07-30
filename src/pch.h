@@ -27,7 +27,7 @@
 #include <QTimer>
 #include <QProcess>
 #include <QtSvgWidgets/QSvgWidget>
-#include <QGeoView/QGVLayerOSM.h>
+#include "QGeoView/QGVLayerOSM.h"
 #include <QStackedLayout>
 #include <QDir>
 #include <QDirIterator>

@@ -2,3 +2,5 @@ build/
 *.ui
 .vscode/
 extern/
+src/QGeoView/
+cacheDir/
